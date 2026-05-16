@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>SP Goat Farm</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="manifest" href="manifest.json">
+
+    <!-- FONT AWESOME ICONS -->
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    >
+
+    <!-- CHART.JS -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- JSPDF -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- LOGIN PAGE -->
+
+    <div id="loginPage">
+
+        <div class="login-card">
+
+            <i class="fa-solid fa-shield-halved login-icon"></i>
+
+            <h1>SP Goat Farm</h1>
+
+            <input
+                type="password"
+                id="pinInput"
+                placeholder="Enter PIN"
+            >
+
+            <button onclick="login()">
+                Login
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- MAIN APP -->
+
+    <div id="mainApp" style="display:none;">
+
+        <!-- TOP HEADER -->
+
+        <div class="top-header">
+
+            <h1>
+                🐐 SP Goat Farm
+            </h1>
+
+            <button
+                class="dark-btn"
+                onclick="toggleDarkMode()"
+            >
+                <i class="fa-solid fa-moon"></i>
+            </button>
+
+        </div>
+
+        <!-- DASHBOARD PAGE -->
+
+        <div id="dashboardPage">
+            <div id="dashboardAlerts"></div>
+            <h2>Dashboard</h2>
+
+            <!-- DASHBOARD CARDS -->
+
+            <div class="dashboard-grid">
+
+                <div class="dashboard-card">
+
+                    <i class="fa-solid fa-cow"></i>
+
+                    <h3>Total Goats</h3>
+
+                    <p id="dashboardGoats">
+                        0
+                    </p>
+
+                </div>
+
+                <div class="dashboard-card">
+
+                    <i class="fa-solid fa-money-bill"></i>
+
+                    <h3>Income</h3>
+
+                    <p id="dashboardIncome">
+                        ₹0
+                    </p>
+
+                </div>
+
+                <div class="dashboard-card">
+
+                    <i class="fa-solid fa-wallet"></i>
+
+                    <h3>Expenses</h3>
+
+                    <p id="dashboardExpense">
+                        ₹0
+                    </p>
+
+                </div>
+
+                <div class="dashboard-card">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    <h3>Profit</h3>
+
+                    <p id="dashboardProfit">
+                        ₹0
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- CHART -->
+
+            <div class="chart-card">
+
+                <canvas id="farmChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <!-- GOAT PAGE -->
+
+        <div id="goatPage" style="display:none;">
+
+            <h2>Goat Information</h2>
+
+            <div class="form-box">
+
+                <input
+                    type="text"
+                    id="tag"
+                    placeholder="Goat Tag"
+                >
+
+                <input
+                    type="text"
+                    id="breed"
+                    placeholder="Breed"
+                >
+
+                <input
+                    type="text"
+                    id="gender"
+                    placeholder="Gender"
+                >
+
+                <input
+                    type="date"
+                    id="dob"
+
+                >
+
+                <input
+                    type="file"
+                    id="goatImage"
+                    accept="image/*"
+                >
+
+                <button onclick="addGoat()">
+                    Add Goat
+                </button>
+
+            </div>
+
+            <p id="totalGoats">
+                Total Goats: 0
+            </p>
+
+            <input
+                type="text"
+                id="searchBox"
+                placeholder="Search goats..."
+                onkeyup="searchGoats()"
+            >
+
+            <div id="goatList"></div>
+
+        </div>
+
+        <!-- BUSINESS PAGE -->
+
+        <div id="businessPage" style="display:none;">
+
+            <h2>Business Management</h2>
+
+            <!-- EXPENSE -->
+
+            <h3>Farm Expenses</h3>
+
+            <div class="form-box">
+
+                <input
+                    type="text"
+                    id="expenseTitle"
+                    placeholder="Expense Title"
+                >
+
+                <input
+                    type="number"
+                    id="expenseAmount"
+                    placeholder="Expense Amount"
+                >
+
+                <button onclick="addExpense()">
+                    Add Expense
+                </button>
+
+            </div>
+
+            <p id="totalExpense">
+                Total Expense: ₹0
+            </p>
+
+            <div id="expenseList"></div>
+
+            <hr>
+
+            <!-- INCOME -->
+
+            <h3>Farm Income</h3>
+
+            <div class="form-box">
+
+                <input
+                    type="text"
+                    id="incomeTitle"
+                    placeholder="Income Title"
+                >
+
+                <input
+                    type="number"
+                    id="incomeAmount"
+                    placeholder="Income Amount"
+                >
+
+                <button onclick="addIncome()">
+                    Add Income
+                </button>
+
+            </div>
+
+            <p id="totalIncome">
+                Total Income: ₹0
+            </p>
+
+            <p id="netProfit">
+                Net Profit: ₹0
+            </p>
+
+            <div id="incomeList"></div>
+
+        </div>
+
+        <!-- BACKUP PAGE -->
+
+        <div id="backupPage" style="display:none;">
+
+            <h2>Backup & Reports</h2>
+
+            <button onclick="downloadPDF()">
+                <i class="fa-solid fa-file-pdf"></i>
+                Download PDF
+            </button>
+
+            <br><br>
+
+            <button onclick="backupData()">
+                <i class="fa-solid fa-download"></i>
+                Backup Data
+            </button>
+
+            <br><br>
+
+            <input
+                type="file"
+                id="restoreFile"
+                onchange="restoreData(event)"
+            >
+
+        </div>
+
+        <!-- FLOATING BUTTON -->
+
+        <button
+            class="fab"
+            onclick="showPage('goatPage')"
+        >
+            <i class="fa-solid fa-plus"></i>
+        </button>
+
+        <!-- BOTTOM NAVIGATION -->
+
+        <div class="bottom-nav">
+
+            <button onclick="showPage('dashboardPage')">
+
+                <i class="fa-solid fa-house"></i>
+
+                <span>Home</span>
+
+            </button>
+
+            <button onclick="showPage('goatPage')">
+
+                <i class="fa-solid fa-cow"></i>
+
+                <span>Goats</span>
+
+            </button>
+
+            <button onclick="showPage('businessPage')">
+
+                <i class="fa-solid fa-chart-line"></i>
+
+                <span>Business</span>
+
+            </button>
+
+            <button onclick="showPage('backupPage')">
+
+                <i class="fa-solid fa-cloud-arrow-down"></i>
+
+                <span>Backup</span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
