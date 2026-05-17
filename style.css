@@ -12,12 +12,19 @@ body {
 }
 
 .container {
+
     max-width: 600px;
+
     margin: auto;
+
     min-height: 100vh;
-    background: white;
+
+    background: #f8fafc;
+
     position: relative;
+
     overflow-x: hidden;
+
     padding-bottom: 100px;
 }
 
@@ -31,59 +38,163 @@ body {
     padding: 20px;
 }
 
-.login-card {
-    width: 100%;
-    background: white;
-    padding: 30px;
-    border-radius: 24px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    text-align: center;
-    animation: fadeIn 0.5s ease;
-}
+/* LOGIN PAGE */
 
-.login-icon {
-    font-size: 60px;
-    color: #16a34a;
-    margin-bottom: 20px;
-}
+#loginPage {
 
-.login-card h1 {
-    margin-bottom: 25px;
-}
-
-/* HEADER */
-
-.top-header {
     display: flex;
-    justify-content: space-between;
+
+    justify-content: center;
+
     align-items: center;
+
+    min-height: 100vh;
+
     padding: 20px;
 }
 
-.top-header h1 {
-    font-size: 26px;
+/* LOGIN CARD */
+
+/* LOGIN CARD */
+
+.login-card {
+
+    width: 100%;
+
+    max-width: 420px;
+
+    border-radius: 32px;
+
+    overflow: hidden;
+
+    position: relative;
+
+    background-image:
+        url("logo_bg.png");
+
+    background-size: cover;
+
+    background-position: center;
+
+    background-repeat: no-repeat;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.25);
 }
 
-.dark-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: #111827;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
+/* DARK OVERLAY */
+
+/* OVERLAY */
+
+.login-overlay {
+
+    background:
+        rgba(255,255,255,0.50);
+
+    backdrop-filter: blur(3px);
+
+    padding: 40px 30px;
+
+    text-align: center;
+}
+/* LOGO */
+
+.login-logo {
+
+    width: 110px;
+
+    height: 110px;
+
+    object-fit: cover;
+
+    border-radius: 24px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 6px 18px rgba(0,0,0,0.15);
+}
+
+/* TITLE */
+
+.login-overlay h1 {
+
+    font-size: 46px;
+
+    margin-bottom: 10px;
+
+    color: #0f172a;
+}
+
+/* SUBTITLE */
+
+.login-overlay p {
+
+    color: #475569;
+
+    margin-bottom: 30px;
+
+    font-size: 16px;
+}
+
+/* INPUT */
+
+.login-overlay input {
+
+    margin-top: 10px;
+}
+
+/* BUTTON */
+
+.login-overlay button {
+
+    margin-top: 18px;
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+
+    .login-card {
+
+        border-radius: 26px;
+    }
+
+    .login-overlay {
+
+        padding: 35px 22px;
+    }
+
+    .login-logo {
+
+        width: 90px;
+
+        height: 90px;
+    }
+
+    .login-overlay h1 {
+
+        font-size: 36px;
+    }
 }
 
 /* INPUTS */
 
-input {
+input,
+select {
+
     width: 100%;
+
     padding: 14px;
+
     margin-top: 12px;
+
     border-radius: 14px;
+
     border: 1px solid #d1d5db;
+
     font-size: 16px;
+
     outline: none;
 }
 
@@ -187,6 +298,15 @@ h3 {
     object-fit: cover;
 }
 
+.goat-card button {
+
+    width: auto;
+
+    padding: 10px 14px;
+
+    font-size: 14px;
+}
+
 /* EXPENSE */
 
 .expense-card {
@@ -222,14 +342,17 @@ h3 {
 /* SEARCH */
 
 #searchBox {
-    margin-top: 16px;
+
+    margin: 16px;
+
+    width: calc(100% - 32px);
 }
 
 /* FLOATING BUTTON */
 
 .fab {
     position: fixed;
-    bottom: 90px;
+    bottom: 100px;
     right: 20px;
     width: 65px;
     height: 65px;
@@ -273,6 +396,209 @@ h3 {
 .bottom-nav button i {
     font-size: 22px;
     margin-bottom: 4px;
+}
+
+/* MODAL */
+
+.modal {
+
+    display: none;
+
+    position: fixed;
+
+    z-index: 1000;
+
+    left: 0;
+    top: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0,0,0,0.5);
+
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 16px;
+
+    width: 90%;
+    max-width: 400px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.modal-content input,
+.modal-content select {
+
+    padding: 12px;
+
+    border-radius: 10px;
+
+    border: 1px solid #ccc;
+}
+
+.modal-content button {
+
+    padding: 12px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: green;
+
+    color: white;
+
+    font-weight: bold;
+}
+
+/* DOWNLOAD SECTION */
+
+.download-section {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin: 15px;
+
+    flex-wrap: wrap;
+}
+
+.download-section button {
+
+    flex: 1;
+
+    min-width: 180px;
+}
+
+/* HEADER */
+
+.app-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    background: white;
+
+    padding: 18px 20px;
+
+    border-radius: 24px;
+
+    margin: 16px;
+
+    box-shadow:
+        0 4px 18px rgba(0,0,0,0.08);
+}
+
+/* LOGO AREA */
+
+.logo-section {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+}
+
+/* LOGO */
+
+.app-logo {
+
+    width: 70px;
+
+    height: 70px;
+
+    object-fit: cover;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* TITLE SECTION */
+
+.title-section {
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+}
+
+/* TITLE */
+
+.title-section h1 {
+
+    margin: 0;
+
+    font-size: 28px;
+
+    font-weight: 800;
+
+    color: #0f172a;
+}
+
+/* SUBTITLE */
+
+.title-section p {
+
+    margin-top: 4px;
+
+    font-size: 15px;
+
+    color: #64748b;
+}
+
+/* DARK MODE BUTTON */
+
+.dark-mode-btn {
+
+    width: 56px;
+
+    height: 56px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: #0f172a;
+
+    color: white;
+
+    font-size: 24px;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    transition: 0.3s;
+}
+
+.dark-mode-btn:hover {
+
+    transform: scale(1.08);
 }
 
 /* ANIMATIONS */
@@ -320,9 +646,13 @@ h3 {
     color: white;
 }
 
-.dark-mode input {
+.dark-mode input,
+.dark-mode select {
+
     background: #374151;
+
     color: white;
+
     border: none;
 }
 
@@ -345,6 +675,38 @@ h3 {
     color: white;
 }
 
+.dark-mode .app-header {
+
+    background: #1f2937;
+}
+
+.dark-mode .title-section h1 {
+
+    color: white;
+}
+
+.dark-mode .title-section p {
+
+    color: #d1d5db;
+}
+
+.dark-mode .modal-content {
+
+    background: #1f2937;
+
+    color: white;
+}
+
+.dark-mode .modal-content input,
+.dark-mode .modal-content select {
+
+    background: #374151;
+
+    color: white;
+
+    border: none;
+}
+
 /* MOBILE */
 
 @media (max-width: 600px) {
@@ -355,5 +717,36 @@ h3 {
 
     .dashboard-grid {
         grid-template-columns: 1fr;
+    }
+
+    .app-header {
+
+        padding: 14px;
+    }
+
+    .app-logo {
+
+        width: 58px;
+
+        height: 58px;
+    }
+
+    .title-section h1 {
+
+        font-size: 22px;
+    }
+
+    .title-section p {
+
+        font-size: 13px;
+    }
+
+    .dark-mode-btn {
+
+        width: 48px;
+
+        height: 48px;
+
+        font-size: 20px;
     }
 }
