@@ -2,7 +2,7 @@ const APP_PIN = "1234";
 
 let goats =
     JSON.parse(localStorage.getItem("goats")) || [];
-
+let currentFilteredGoats = goats;
 let expenses =
     JSON.parse(localStorage.getItem("expenses")) || [];
 
@@ -152,61 +152,103 @@ function renderDashboardAlerts() {
     goats.forEach(goat => {
 
         /* VACCINATION ALERT */
+/* VACCINATION ALERT */
 
-        if (
-            goat.vaccinations &&
-            goat.vaccinations.length > 0
-        ) {
+if (
+    goat.vaccinations &&
+    goat.vaccinations.length > 0
+) {
 
-            const lastVaccine =
-                goat.vaccinations[
-                    goat.vaccinations.length - 1
-                ];
+    const lastVaccine =
+        goat.vaccinations[
+            goat.vaccinations.length - 1
+        ];
 
-            const vaccineDate =
-                new Date(lastVaccine.date);
+    if (lastVaccine.date) {
 
-            const nextVaccine =
-                new Date(vaccineDate);
+        const today =
+            new Date();
 
-            nextVaccine.setMonth(
-                nextVaccine.getMonth() + 6
+        const vaccineDate =
+            new Date(lastVaccine.date);
+
+        /* NEXT VACCINE AFTER 6 MONTHS */
+
+        const nextVaccine =
+            new Date(vaccineDate);
+
+        nextVaccine.setDate(
+            nextVaccine.getDate() + 180
+        );
+
+        const timeDifference =
+            nextVaccine.getTime()
+            -
+            today.getTime();
+
+        const diffDays =
+            Math.ceil(
+                timeDifference
+                /
+                (1000 * 60 * 60 * 24)
             );
 
-            const diffDays =
-                Math.ceil(
-                    (nextVaccine - today)
-                    /
-                    (1000 * 60 * 60 * 24)
-                );
+        console.log(
+            goat.tag,
+            "Vaccine Days:",
+            diffDays
+        );
 
-            if (
-                diffDays >= 0
-                &&
-                diffDays <= 30
-            ) {
+        if (
+            diffDays >= 0
+            &&
+            diffDays <= 30
+        ) {
 
-                alertsContainer.innerHTML += `
+            alertsContainer.innerHTML += `
 
-                    <div style="
-                        background:#fef3c7;
-                        padding:14px;
-                        border-radius:12px;
-                        margin-bottom:10px;
-                        font-weight:bold;
-                    ">
+                <div style="
+                    background:#fef3c7;
+                    padding:14px;
+                    border-radius:12px;
+                    margin-bottom:10px;
+                    font-weight:bold;
+                ">
 
-                        🔔 Goat
-                        ${goat.tag}
+                    🔔 Goat
+                    ${goat.tag}
 
-                        vaccine due in
-                        ${diffDays} days
+                    vaccine due in
+                    ${diffDays} days
 
-                    </div>
-                `;
-            }
+                </div>
+            `;
         }
 
+        /* OVERDUE */
+
+        if (diffDays < 0) {
+
+            alertsContainer.innerHTML += `
+
+                <div style="
+                    background:#fecaca;
+                    padding:14px;
+                    border-radius:12px;
+                    margin-bottom:10px;
+                    font-weight:bold;
+                ">
+
+                    ⚠ Goat
+                    ${goat.tag}
+
+                    vaccine overdue
+
+                </div>
+            `;
+        }
+    }
+}
         /* DELIVERY ALERT */
 
         if (
@@ -368,7 +410,6 @@ function calculateAge(dob) {
 }
 
 /* GOATS */
-
 function renderGoats(filteredGoats = goats) {
 
     const goatList =
@@ -382,7 +423,14 @@ function renderGoats(filteredGoats = goats) {
     totalGoats.innerText =
         `Total Goats: ${filteredGoats.length}`;
 
-    filteredGoats.forEach((goat, index) => {
+    filteredGoats.forEach((goat) => {
+
+        /* ORIGINAL INDEX FIX */
+
+        const originalIndex =
+            goats.findIndex(
+                g => g.tag === goat.tag
+            );
 
         if (!goat.vaccinations)
             goat.vaccinations = [];
@@ -401,209 +449,184 @@ function renderGoats(filteredGoats = goats) {
 
         let vaccineHTML = "";
 
-        let weightHTML = "";
-
-        let healthHTML = "";
-
-        let breedingHTML = "";
-
-        let saleHTML = "";
-
-        let reminderHTML = "";
-
-/* REMINDERS */
-
-const today = new Date();
-
-if (goat.vaccinations.length > 0) {
-
-    const lastVaccine =
-        goat.vaccinations[
-            goat.vaccinations.length - 1
-        ];
-
-    const vaccineDate =
-        new Date(lastVaccine.date);
-
-    const nextVaccine =
-        new Date(vaccineDate);
-
-    nextVaccine.setMonth(
-        nextVaccine.getMonth() + 6
-    );
-
-    const diffDays =
-        Math.ceil(
-            (nextVaccine - today)
-            /
-            (1000 * 60 * 60 * 24)
-        );
-
-    if (diffDays <= 30 && diffDays > 0) {
-
-        reminderHTML += `
-            <div style="
-                background:#fef3c7;
-                padding:12px;
-                border-radius:12px;
-                margin-top:10px;
-            ">
-
-                🔔 Vaccination Due
-                in ${diffDays} days
-
-            </div>
-        `;
-    }
-}
-/* BREEDING REMINDER */
-
-if (goat.breedingRecords.length > 0) {
-
-    const lastBreeding =
-        goat.breedingRecords[
-            goat.breedingRecords.length - 1
-        ];
-
-    if (
-        lastBreeding.pregnancyStatus
-            .toLowerCase() === "yes"
-        &&
-        lastBreeding.givenBirth
-            .toLowerCase() === "no"
-    ) {
-
-        const today =
-            new Date();
-
-        const deliveryDate =
-            new Date(
-                lastBreeding.deliveryDate
-            );
-
-        const timeDifference =
-            deliveryDate.getTime()
-            -
-            today.getTime();
-
-        const diffDelivery =
-            Math.ceil(
-                timeDifference
-                /
-                (1000 * 60 * 60 * 24)
-            );
+        /* VACCINATION */
 
         if (
-            diffDelivery >= 0
-            &&
-            diffDelivery <= 15
+            goat.vaccinations &&
+            goat.vaccinations.length > 0
         ) {
 
-            reminderHTML += `
-                <div style="
-                    background:#dcfce7;
-                    padding:12px;
-                    border-radius:12px;
-                    margin-top:10px;
-                    font-weight:bold;
-                ">
-
-                    🐐 Delivery Expected
-                    in ${diffDelivery} days
-
-                </div>
-            `;
-        }
-
-        if (diffDelivery < 0) {
-
-            reminderHTML += `
-                <div style="
-                    background:#fecaca;
-                    padding:12px;
-                    border-radius:12px;
-                    margin-top:10px;
-                    font-weight:bold;
-                ">
-
-                    ⚠ Delivery Date Passed
-
-                </div>
-            `;
-        }
-    }
-}
-
-/* BREEDING */
-
-/* BREEDING */
-
-if (goat.breedingRecords.length > 0) {
-
-    breedingHTML += `
-        <h4>
-            Breeding Records
-        </h4>
-    `;
-
-    goat.breedingRecords.forEach(record => {
-
-        breedingHTML += `
-
-            • Mating Date:
-            ${record.matingDate}
-            <br>
-
-            Pregnancy:
-            ${record.pregnancyStatus}
-            <br>
-
-            Expected Delivery:
-            ${record.deliveryDate}
-            <br>
-
-            Given Birth:
-            ${record.givenBirth}
-            <br>
-
-            Kids:
-            ${record.kidsType}
-            <br><br>
-        `;
-    });
-}
-        /* HEALTH */
-
-        if (goat.healthRecords.length > 0) {
-
-            healthHTML += `
-                <h4>Health Records</h4>
+            vaccineHTML += `
+                <h4>
+                    Vaccinations
+                </h4>
             `;
 
-            goat.healthRecords.forEach(record => {
+            goat.vaccinations.forEach(vaccine => {
 
-                healthHTML += `
-                    • ${record.problem}
-                    <br>
+                vaccineHTML += `
 
-                    Medicine:
-                    ${record.medicine}
+                    • ${vaccine.name}
+
                     <br>
 
                     Date:
-                    ${record.date}
+                    ${vaccine.date}
+
                     <br><br>
                 `;
             });
         }
 
+        let weightHTML = "";
+
+        /* WEIGHT */
+
+        if (
+            goat.weights &&
+            goat.weights.length > 0
+        ) {
+
+            weightHTML += `
+                <h4>
+                    Weight History
+                </h4>
+            `;
+
+            goat.weights.forEach(weight => {
+
+                weightHTML += `
+
+                    • ${weight.weight} KG
+
+                    <br>
+
+                    Date:
+                    ${weight.date}
+
+                    <br><br>
+                `;
+            });
+        }
+
+        let healthHTML = "";
+
+        /* HEALTH */
+
+        if (
+            goat.healthRecords &&
+            goat.healthRecords.length > 0
+        ) {
+
+            healthHTML += `
+                <h4>
+                    Health Records
+                </h4>
+            `;
+
+            goat.healthRecords.forEach(record => {
+
+                healthHTML += `
+
+                    • ${record.problem}
+
+                    <br>
+
+                    Medicine:
+                    ${record.medicine}
+
+                    <br>
+
+                    Date:
+                    ${record.date}
+
+                    <br><br>
+                `;
+            });
+        }
+
+        let breedingHTML = "";
+
+        /* BREEDING */
+
+        if (
+            goat.breedingRecords &&
+            goat.breedingRecords.length > 0
+        ) {
+
+            breedingHTML += `
+                <h4>
+                    Breeding Records
+                </h4>
+            `;
+
+            goat.breedingRecords.forEach(record => {
+
+                breedingHTML += `
+
+                    • Mating Date:
+                    ${record.matingDate}
+
+                    <br>
+
+                    Pregnancy:
+                    ${record.pregnancyStatus}
+
+                    <br>
+
+                    Expected Delivery:
+                    ${record.deliveryDate}
+
+                    <br>
+
+                    Given Birth:
+                    ${record.givenBirth}
+
+                    <br>
+
+                    Kids:
+                    ${record.kidsType}
+                    <br>
+
+Children Tags:
+
+<br>
+
+${
+
+    record.childTags
+    &&
+    record.childTags.length > 0
+
+    ?
+
+    record.childTags.join("<br>")
+
+    :
+
+    "N/A"
+}
+
+
+
+                    <br><br>
+                `;
+            });
+        }
+
+        let saleHTML = "";
 
         /* SALE */
 
-        if (goat.saleRecords.length > 0) {
+        if (
+            goat.saleRecords &&
+            goat.saleRecords.length > 0
+        ) {
 
             saleHTML += `
-                <h4>Sale Records</h4>
+                <h4>
+                    Sale Records
+                </h4>
             `;
 
             goat.saleRecords.forEach(record => {
@@ -614,46 +637,239 @@ if (goat.breedingRecords.length > 0) {
                     Number(record.purchasePrice);
 
                 saleHTML += `
+
                     Purchase:
                     ₹${record.purchasePrice}
+
                     <br>
 
                     Sale:
                     ₹${record.salePrice}
+
                     <br>
 
                     Buyer:
                     ${record.buyer}
+
+                    <br>
+
+                    Sale Date:
+                    ${record.saleDate}
+
                     <br>
 
                     Profit:
                     ₹${profit}
+
                     <br><br>
                 `;
             });
         }
 
+        let reminderHTML = "";
+
+        /* REMINDERS */
+
+        const today = new Date();
+
+        /* VACCINATION REMINDER */
+
+        if (
+            goat.vaccinations &&
+            goat.vaccinations.length > 0
+        ) {
+
+            const lastVaccine =
+                goat.vaccinations[
+                    goat.vaccinations.length - 1
+                ];
+
+            if (lastVaccine.date) {
+
+                const vaccineDate =
+                    new Date(lastVaccine.date);
+
+                const nextVaccine =
+                    new Date(vaccineDate);
+
+                nextVaccine.setDate(
+                    nextVaccine.getDate() + 180
+                );
+
+                const timeDifference =
+                    nextVaccine.getTime()
+                    -
+                    today.getTime();
+
+                const diffDays =
+                    Math.ceil(
+                        timeDifference
+                        /
+                        (1000 * 60 * 60 * 24)
+                    );
+
+                if (
+                    diffDays >= 0
+                    &&
+                    diffDays <= 30
+                ) {
+
+                    reminderHTML += `
+
+                        <div style="
+                            background:#fef3c7;
+                            padding:12px;
+                            border-radius:12px;
+                            margin-top:10px;
+                            font-weight:bold;
+                        ">
+
+                            🔔 Goat
+                            ${goat.tag}
+
+                            vaccine due in
+                            ${diffDays} days
+
+                        </div>
+                    `;
+                }
+
+                if (diffDays < 0) {
+
+                    reminderHTML += `
+
+                        <div style="
+                            background:#fecaca;
+                            padding:12px;
+                            border-radius:12px;
+                            margin-top:10px;
+                            font-weight:bold;
+                        ">
+
+                            ⚠ Goat
+                            ${goat.tag}
+
+                            vaccine overdue
+
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        /* BREEDING REMINDER */
+
+        if (
+            goat.breedingRecords &&
+            goat.breedingRecords.length > 0
+        ) {
+
+            const lastBreeding =
+                goat.breedingRecords[
+                    goat.breedingRecords.length - 1
+                ];
+
+            if (
+                lastBreeding.pregnancyStatus
+                    .toLowerCase() === "yes"
+                &&
+                lastBreeding.givenBirth
+                    .toLowerCase() === "no"
+            ) {
+
+                const deliveryDate =
+                    new Date(
+                        lastBreeding.deliveryDate
+                    );
+
+                const timeDifference =
+                    deliveryDate.getTime()
+                    -
+                    today.getTime();
+
+                const diffDelivery =
+                    Math.ceil(
+                        timeDifference
+                        /
+                        (1000 * 60 * 60 * 24)
+                    );
+
+                if (
+                    diffDelivery >= 0
+                    &&
+                    diffDelivery <= 15
+                ) {
+
+                    reminderHTML += `
+
+                        <div style="
+                            background:#dcfce7;
+                            padding:12px;
+                            border-radius:12px;
+                            margin-top:10px;
+                            font-weight:bold;
+                        ">
+
+                            🐐 Goat
+                            ${goat.tag}
+
+                            delivery expected in
+                            ${diffDelivery} days
+
+                        </div>
+                    `;
+                }
+
+                if (diffDelivery < 0) {
+
+                    reminderHTML += `
+
+                        <div style="
+                            background:#fecaca;
+                            padding:12px;
+                            border-radius:12px;
+                            margin-top:10px;
+                            font-weight:bold;
+                        ">
+
+                            ⚠ Goat
+                            ${goat.tag}
+
+                            delivery overdue
+
+                        </div>
+                    `;
+                }
+            }
+        }
+
         goatList.innerHTML += `
+
             <div class="goat-card">
 
                 <strong>Tag:</strong>
                 ${goat.tag}
+
                 <br><br>
 
                 <strong>Breed:</strong>
                 ${goat.breed}
+
                 <br><br>
 
                 <strong>Gender:</strong>
                 ${goat.gender}
+
                 <br><br>
 
                 <strong>DOB:</strong>
                 ${goat.dob}
+
                 <br><br>
 
                 <strong>Age:</strong>
                 ${calculateAge(goat.dob)}
+
                 <br><br>
 
                 ${goat.image
@@ -666,12 +882,17 @@ if (goat.breedingRecords.length > 0) {
                     : ""
                 }
 
-                ${vaccineHTML}
-                ${weightHTML}
-                ${healthHTML}
-                ${breedingHTML}
-                ${saleHTML}
                 ${reminderHTML}
+
+                ${vaccineHTML}
+
+                ${weightHTML}
+
+                ${healthHTML}
+
+                ${breedingHTML}
+
+                ${saleHTML}
 
                 <div style="
                     display:flex;
@@ -680,34 +901,35 @@ if (goat.breedingRecords.length > 0) {
                     margin-top:12px;
                 ">
 
-                    <button onclick="editGoat(${index})">
+                    <button onclick="editGoat(${originalIndex})">
                         ✏ Edit
                     </button>
 
-                    <button onclick="deleteGoat(${index})">
+                    <button onclick="deleteGoat(${originalIndex})">
                         🗑 Delete
                     </button>
 
-                    <button onclick="addVaccination(${index})">
+                    <button onclick="addVaccination(${originalIndex})">
                         💉 Vaccine
                     </button>
 
-                    <button onclick="addWeight(${index})">
+                    <button onclick="addWeight(${originalIndex})">
                         ⚖ Weight
                     </button>
 
-                    <button onclick="addHealthRecord(${index})">
+                    <button onclick="addHealthRecord(${originalIndex})">
                         🩺 Health
                     </button>
 
-                    <button onclick="addBreedingRecord(${index})">
+                    <button onclick="addBreedingRecord(${originalIndex})">
                         🐐 Breeding
                     </button>
-                    <button onclick="updateBirthRecord(${index})">
+
+                    <button onclick="updateBirthRecord(${originalIndex})">
                         👶 Birth
                     </button>
 
-                    <button onclick="addSaleRecord(${index})">
+                    <button onclick="addSaleRecord(${originalIndex})">
                         💰 Sale
                     </button>
 
@@ -874,20 +1096,46 @@ function deleteGoat(index) {
 }
 
 /* VACCINATION */
+let currentVaccineIndex = -1;
 
 function addVaccination(index) {
 
-    const vaccineName =
-        prompt("Enter Vaccine Name");
+    currentVaccineIndex = index;
 
-    if (!vaccineName) return;
+    document.getElementById(
+        "vaccineModal"
+    ).style.display = "flex";
+}
+
+function saveVaccination() {
+
+    const vaccineName =
+        document.getElementById(
+            "vaccineName"
+        ).value;
 
     const vaccineDate =
-        prompt("Enter Vaccination Date");
+        document.getElementById(
+            "vaccineDate"
+        ).value;
 
-    if (!vaccineDate) return;
+    if (!vaccineName || !vaccineDate) {
 
-    goats[index]
+        alert("Fill all fields");
+
+        return;
+    }
+
+    if (
+        !goats[currentVaccineIndex]
+        .vaccinations
+    ) {
+
+        goats[currentVaccineIndex]
+            .vaccinations = [];
+    }
+
+    goats[currentVaccineIndex]
         .vaccinations.push({
 
             name: vaccineName,
@@ -897,23 +1145,72 @@ function addVaccination(index) {
     saveData();
 
     renderGoats();
+
+    renderDashboardAlerts();
+
+    closeVaccineModal();
+
+    alert(
+        "Vaccination Added"
+    );
 }
 
+function closeVaccineModal() {
+
+    document.getElementById(
+        "vaccineModal"
+    ).style.display = "none";
+
+    document.getElementById(
+        "vaccineName"
+    ).value = "";
+
+    document.getElementById(
+        "vaccineDate"
+    ).value = "";
+}
 /* WEIGHT */
+let currentWeightIndex = -1;
 
 function addWeight(index) {
 
-    const weight =
-        prompt("Enter Weight");
+    currentWeightIndex = index;
 
-    if (!weight) return;
+    document.getElementById(
+        "weightModal"
+    ).style.display = "flex";
+}
+function saveWeight() {
+
+    const weight =
+        document.getElementById(
+            "weightValue"
+        ).value;
 
     const date =
-        prompt("Enter Date");
+        document.getElementById(
+            "weightDate"
+        ).value;
 
-    if (!date) return;
+    if (!weight || !date) {
 
-    goats[index]
+        alert(
+            "Fill all fields"
+        );
+
+        return;
+    }
+
+    if (
+        !goats[currentWeightIndex]
+        .weights
+    ) {
+
+        goats[currentWeightIndex]
+            .weights = [];
+    }
+
+    goats[currentWeightIndex]
         .weights.push({
 
             weight,
@@ -923,28 +1220,79 @@ function addWeight(index) {
     saveData();
 
     renderGoats();
+
+    closeWeightModal();
+
+    alert(
+        "Weight Added"
+    );
 }
 
+function closeWeightModal() {
+
+    document.getElementById(
+        "weightModal"
+    ).style.display = "none";
+
+    document.getElementById(
+        "weightValue"
+    ).value = "";
+
+    document.getElementById(
+        "weightDate"
+    ).value = "";
+}
 /* HEALTH */
+/* --------------------------------------------*/
+/* HEALTH MODAL */
+
+let currentHealthIndex = -1;
 
 function addHealthRecord(index) {
 
-    const problem =
-        prompt("Enter Health Problem");
+    currentHealthIndex = index;
 
-    if (!problem) return;
+    document.getElementById(
+        "healthModal"
+    ).style.display = "flex";
+}
+
+function saveHealthRecord() {
+
+    const problem =
+        document.getElementById(
+            "healthProblem"
+        ).value;
 
     const medicine =
-        prompt("Enter Medicine");
-
-    if (!medicine) return;
+        document.getElementById(
+            "healthMedicine"
+        ).value;
 
     const date =
-        prompt("Enter Date");
+        document.getElementById(
+            "healthDate"
+        ).value;
 
-    if (!date) return;
+    if (!problem || !medicine || !date) {
 
-    goats[index]
+        alert(
+            "Fill all fields"
+        );
+
+        return;
+    }
+
+    if (
+        !goats[currentHealthIndex]
+        .healthRecords
+    ) {
+
+        goats[currentHealthIndex]
+            .healthRecords = [];
+    }
+
+    goats[currentHealthIndex]
         .healthRecords.push({
 
             problem,
@@ -955,29 +1303,70 @@ function addHealthRecord(index) {
     saveData();
 
     renderGoats();
+
+    closeHealthModal();
+
+    alert(
+        "Health Record Added"
+    );
 }
 
+function closeHealthModal() {
+
+    document.getElementById(
+        "healthModal"
+    ).style.display = "none";
+
+    document.getElementById(
+        "healthProblem"
+    ).value = "";
+
+    document.getElementById(
+        "healthMedicine"
+    ).value = "";
+
+    document.getElementById(
+        "healthDate"
+    ).value = "";
+}
 /* BREEDING */
+/* BREEDING MODAL */
+
+let currentBreedingIndex = -1;
+
 function addBreedingRecord(index) {
 
-    if (!goats[index].breedingRecords) {
+    currentBreedingIndex = index;
 
-        goats[index].breedingRecords = [];
-    }
+    document.getElementById(
+        "breedingModal"
+    ).style.display = "flex";
+}
+
+function saveBreedingRecord() {
 
     const matingDate =
-        prompt(
-            "Enter Mating Date (YYYY-MM-DD)"
-        );
-
-    if (!matingDate) return;
+        document.getElementById(
+            "matingDate"
+        ).value;
 
     const pregnancyStatus =
-        prompt(
-            "Pregnant? Yes / No"
+        document.getElementById(
+            "pregnancyStatus"
+        ).value;
+
+    if (
+        !matingDate
+        ||
+        !pregnancyStatus
+    ) {
+
+        alert(
+            "Fill all fields"
         );
 
-    if (!pregnancyStatus) return;
+        return;
+    }
 
     /* AUTO DELIVERY DATE */
 
@@ -995,7 +1384,16 @@ function addBreedingRecord(index) {
         delivery.toISOString()
         .split("T")[0];
 
-    goats[index]
+    if (
+        !goats[currentBreedingIndex]
+        .breedingRecords
+    ) {
+
+        goats[currentBreedingIndex]
+            .breedingRecords = [];
+    }
+
+    goats[currentBreedingIndex]
         .breedingRecords.push({
 
             matingDate,
@@ -1011,16 +1409,79 @@ function addBreedingRecord(index) {
 
     renderGoats();
 
+    closeBreedingModal();
+
     alert(
         "Breeding Record Added"
     );
 }
+
+function closeBreedingModal() {
+
+    document.getElementById(
+        "breedingModal"
+    ).style.display = "none";
+
+    document.getElementById(
+        "matingDate"
+    ).value = "";
+
+    document.getElementById(
+        "pregnancyStatus"
+    ).value = "";
+}
+/* BIRTH MODAL */
+
+let currentBirthIndex = -1;
+
 function updateBirthRecord(index) {
 
+    currentBirthIndex = index;
+
+    document.getElementById(
+        "birthModal"
+    ).style.display = "flex";
+}
+function saveBirthRecord() {
+
+    const givenBirth =
+        document.getElementById(
+            "givenBirth"
+        ).value;
+
+    const kidsType =
+        document.getElementById(
+            "kidsType"
+        ).value;
+
+    if (!givenBirth) {
+
+        alert(
+            "Select Birth Status"
+        );
+
+        return;
+    }
+
     if (
-        !goats[index].breedingRecords
+        givenBirth === "Yes"
+        &&
+        !kidsType
+    ) {
+
+        alert(
+            "Select Kids Type"
+        );
+
+        return;
+    }
+
+    if (
+        !goats[currentBirthIndex]
+        .breedingRecords
         ||
-        goats[index].breedingRecords.length === 0
+        goats[currentBirthIndex]
+        .breedingRecords.length === 0
     ) {
 
         alert(
@@ -1031,46 +1492,158 @@ function updateBirthRecord(index) {
     }
 
     const lastRecord =
-        goats[index].breedingRecords[
-            goats[index]
+        goats[currentBirthIndex]
+        .breedingRecords[
+
+            goats[currentBirthIndex]
             .breedingRecords.length - 1
         ];
 
-    const givenBirth =
-        prompt(
-            "Given Birth? Yes / No"
-        );
-
-    if (!givenBirth) return;
+    /* UPDATE BIRTH STATUS */
 
     lastRecord.givenBirth =
         givenBirth;
 
     if (
-        givenBirth.toLowerCase() === "yes"
+        givenBirth === "Yes"
     ) {
 
-        const kidsType =
-            prompt(
-                "Single / Double / Triplet"
-            );
+        lastRecord.kidsType =
+            kidsType;
 
-        if (kidsType) {
+        /* CHILD TAGS */
 
-            lastRecord.kidsType =
-                kidsType;
+        let childTags = [];
+
+        if (kidsType === "Single") {
+
+            const tag1 =
+                document.getElementById(
+                    "childTag1"
+                ).value;
+
+            if (!tag1) {
+
+                alert(
+                    "Enter Child Tag"
+                );
+
+                return;
+            }
+
+            childTags.push(tag1);
         }
+
+        else if (
+            kidsType === "Double"
+        ) {
+
+            const tag1 =
+                document.getElementById(
+                    "childTag1"
+                ).value;
+
+            const tag2 =
+                document.getElementById(
+                    "childTag2"
+                ).value;
+
+            if (
+                !tag1
+                ||
+                !tag2
+            ) {
+
+                alert(
+                    "Enter All Child Tags"
+                );
+
+                return;
+            }
+
+            childTags.push(tag1);
+            childTags.push(tag2);
+        }
+
+        else if (
+            kidsType === "Triplet"
+        ) {
+
+            const tag1 =
+                document.getElementById(
+                    "childTag1"
+                ).value;
+
+            const tag2 =
+                document.getElementById(
+                    "childTag2"
+                ).value;
+
+            const tag3 =
+                document.getElementById(
+                    "childTag3"
+                ).value;
+
+            if (
+                !tag1
+                ||
+                !tag2
+                ||
+                !tag3
+            ) {
+
+                alert(
+                    "Enter All Child Tags"
+                );
+
+                return;
+            }
+
+            childTags.push(tag1);
+            childTags.push(tag2);
+            childTags.push(tag3);
+        }
+
+        /* SAVE CHILD TAGS */
+
+        lastRecord.childTags =
+            childTags;
+
+    } else {
+
+        lastRecord.kidsType =
+            "Not Yet";
+
+        lastRecord.childTags =
+            [];
     }
 
     saveData();
 
     renderGoats();
 
+    closeBirthModal();
+
     alert(
         "Birth Record Updated"
     );
 }
 
+
+function closeBirthModal() {
+
+    document.getElementById(
+        "birthModal"
+    ).style.display = "none";
+
+    document.getElementById(
+        "givenBirth"
+    ).value = "";
+
+    document.getElementById(
+        "kidsType"
+    ).value = "";
+}
 /* CLEAR */
 
 function clearForm() {
@@ -1089,6 +1662,990 @@ function clearForm() {
 
     document.getElementById(
         "goatImage"
+    ).value = "";
+}
+
+/* SALE MODAL */
+
+let currentSaleIndex = -1;
+
+function addSaleRecord(index) {
+
+    currentSaleIndex = index;
+
+    document.getElementById(
+        "saleModal"
+    ).style.display = "flex";
+}
+
+function saveSaleRecord() {
+
+    const purchasePrice =
+        document.getElementById(
+            "purchasePrice"
+        ).value;
+
+    const salePrice =
+        document.getElementById(
+            "salePrice"
+        ).value;
+
+    const buyer =
+        document.getElementById(
+            "buyerName"
+        ).value;
+
+    const saleDate =
+        document.getElementById(
+            "saleDate"
+        ).value;
+
+    if (
+        !purchasePrice
+        ||
+        !salePrice
+        ||
+        !buyer
+        ||
+        !saleDate
+    ) {
+
+        alert(
+            "Fill all fields"
+        );
+
+        return;
+    }
+
+    if (
+        !goats[currentSaleIndex]
+        .saleRecords
+    ) {
+
+        goats[currentSaleIndex]
+            .saleRecords = [];
+    }
+
+    goats[currentSaleIndex]
+        .saleRecords.push({
+
+            purchasePrice,
+            salePrice,
+            buyer,
+            saleDate
+        });
+
+    /* AUTO STATUS SOLD */
+
+    goats[currentSaleIndex]
+        .status = "Sold";
+
+    saveData();
+
+    renderGoats();
+
+    closeSaleModal();
+
+    alert(
+        "Sale Record Added"
+    );
+}
+/* DOWNLOAD FUNCTIONS */
+
+
+/* DOWNLOAD ALL GOATS PDF */
+function downloadAllGoats() {
+
+    if (goats.length === 0) {
+
+        alert("No goats available");
+
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+
+    const doc = new jsPDF();
+
+    /* DATE */
+
+    const today =
+        new Date();
+
+    const day =
+        String(today.getDate())
+        .padStart(2, "0");
+
+    const month =
+        String(today.getMonth() + 1)
+        .padStart(2, "0");
+
+    const year =
+        today.getFullYear();
+
+    const formattedDate =
+        `${day}${month}${year}`;
+
+    let y = 30;
+
+    /* REPORT HEADING */
+
+    doc.setFontSize(20);
+
+    doc.text(
+        "All Goats Farm Report",
+        20,
+        15
+    );
+
+    doc.setFontSize(11);
+
+    doc.text(
+        `Date: ${day}-${month}-${year}`,
+        20,
+        22
+    );
+
+    goats.forEach((goat, index) => {
+
+        if (y > 260) {
+
+            doc.addPage();
+
+            y = 20;
+        }
+
+        doc.setFontSize(14);
+
+        doc.text(
+            `Goat ${index + 1}`,
+            20,
+            y
+        );
+
+        y += 8;
+
+        doc.setFontSize(11);
+
+        doc.text(
+            `Tag: ${goat.tag}`,
+            20,
+            y
+        );
+
+        y += 6;
+
+        doc.text(
+            `Breed: ${goat.breed}`,
+            20,
+            y
+        );
+
+        y += 6;
+
+        doc.text(
+            `Gender: ${goat.gender}`,
+            20,
+            y
+        );
+
+        y += 6;
+
+        doc.text(
+            `DOB: ${goat.dob}`,
+            20,
+            y
+        );
+
+        y += 6;
+
+        doc.text(
+            `Status: ${goat.status || "Active"}`,
+            20,
+            y
+        );
+
+        y += 10;
+
+        /* VACCINATIONS */
+
+        if (
+            goat.vaccinations &&
+            goat.vaccinations.length > 0
+        ) {
+
+            doc.text(
+                "Vaccinations:",
+                20,
+                y
+            );
+
+            y += 6;
+
+            goat.vaccinations.forEach(vaccine => {
+
+                if (y > 270) {
+
+                    doc.addPage();
+
+                    y = 20;
+                }
+
+                doc.text(
+                    `• ${vaccine.name} (${vaccine.date})`,
+                    25,
+                    y
+                );
+
+                y += 6;
+            });
+        }
+
+        /* WEIGHTS */
+
+        if (
+            goat.weights &&
+            goat.weights.length > 0
+        ) {
+
+            doc.text(
+                "Weight History:",
+                20,
+                y
+            );
+
+            y += 6;
+
+            goat.weights.forEach(weight => {
+
+                if (y > 270) {
+
+                    doc.addPage();
+
+                    y = 20;
+                }
+
+                doc.text(
+                    `• ${weight.weight} KG (${weight.date})`,
+                    25,
+                    y
+                );
+
+                y += 6;
+            });
+        }
+
+        /* HEALTH */
+
+        if (
+            goat.healthRecords &&
+            goat.healthRecords.length > 0
+        ) {
+
+            doc.text(
+                "Health Records:",
+                20,
+                y
+            );
+
+            y += 6;
+
+            goat.healthRecords.forEach(record => {
+
+                if (y > 270) {
+
+                    doc.addPage();
+
+                    y = 20;
+                }
+
+                doc.text(
+                    `• ${record.problem}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Medicine: ${record.medicine}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                /* FIXED DATE LOGIC */
+
+                doc.text(
+                    `Date: ${record.date || "N/A"}`,
+                    25,
+                    y
+                );
+
+                y += 8;
+            });
+        }
+
+        /* BREEDING */
+
+        if (
+            goat.breedingRecords &&
+            goat.breedingRecords.length > 0
+        ) {
+
+            doc.text(
+                "Breeding Records:",
+                20,
+                y
+            );
+
+            y += 6;
+
+            goat.breedingRecords.forEach(record => {
+
+                if (y > 270) {
+
+                    doc.addPage();
+
+                    y = 20;
+                }
+
+                doc.text(
+                    `• Mating: ${record.matingDate}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Pregnancy: ${record.pregnancyStatus}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Delivery: ${record.deliveryDate}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Birth: ${record.givenBirth}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Kids: ${record.kidsType}`,
+                    25,
+                    y
+                );
+
+                y += 8;
+            });
+        }
+
+        /* SALES */
+
+        if (
+            goat.saleRecords &&
+            goat.saleRecords.length > 0
+        ) {
+
+            doc.text(
+                "Sale Records:",
+                20,
+                y
+            );
+
+            y += 6;
+
+            goat.saleRecords.forEach(record => {
+
+                if (y > 270) {
+
+                    doc.addPage();
+
+                    y = 20;
+                }
+
+                const profit =
+                    Number(record.salePrice)
+                    -
+                    Number(record.purchasePrice);
+
+                doc.text(
+                    `• Purchase: ₹${record.purchasePrice}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Sale: ₹${record.salePrice}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Profit: ₹${profit}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Buyer: ${record.buyer}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Sale Date: ${record.saleDate || "N/A"}`,
+                    25,
+                    y
+                );
+
+                y += 8;
+            });
+        }
+
+        doc.line(20, y, 190, y);
+
+        y += 12;
+    });
+
+    /* DOWNLOAD FILE */
+
+    doc.save(
+        `all_goats_${formattedDate}_report.pdf`
+    );
+}
+/* DOWNLOAD FILTERED GOATS PDF */
+function downloadFilteredGoats() {
+
+    if (
+        !currentFilteredGoats
+        ||
+        currentFilteredGoats.length === 0
+    ) {
+
+        alert(
+            "No searched goats found"
+        );
+
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+
+    const doc = new jsPDF();
+
+    /* DATE */
+
+    const today =
+        new Date();
+
+    const day =
+        String(today.getDate())
+        .padStart(2, "0");
+
+    const month =
+        String(today.getMonth() + 1)
+        .padStart(2, "0");
+
+    const year =
+        today.getFullYear();
+
+    const formattedDate =
+        `${day}${month}${year}`;
+
+    /* FIRST GOAT TAG */
+
+    const goatTag =
+        currentFilteredGoats[0].tag;
+
+    let y = 30;
+
+    /* REPORT HEADING */
+
+    doc.setFontSize(20);
+
+    doc.text(
+        `${goatTag} Report`,
+        20,
+        15
+    );
+
+    doc.setFontSize(11);
+
+    doc.text(
+        `Date: ${day}-${month}-${year}`,
+        20,
+        22
+    );
+
+    currentFilteredGoats.forEach((goat, index) => {
+
+        if (y > 260) {
+
+            doc.addPage();
+
+            y = 20;
+        }
+
+        doc.setFontSize(14);
+
+        doc.text(
+            `Goat ${index + 1}`,
+            20,
+            y
+        );
+
+        y += 8;
+
+        doc.setFontSize(11);
+
+        doc.text(
+            `Tag: ${goat.tag}`,
+            20,
+            y
+        );
+
+        y += 6;
+
+        doc.text(
+            `Breed: ${goat.breed}`,
+            20,
+            y
+        );
+
+        y += 6;
+
+        doc.text(
+            `Gender: ${goat.gender}`,
+            20,
+            y
+        );
+
+        y += 6;
+
+        doc.text(
+            `DOB: ${goat.dob}`,
+            20,
+            y
+        );
+
+        y += 6;
+
+        doc.text(
+            `Status: ${goat.status || "Active"}`,
+            20,
+            y
+        );
+
+        y += 10;
+
+        /* VACCINATIONS */
+
+        if (
+            goat.vaccinations &&
+            goat.vaccinations.length > 0
+        ) {
+
+            doc.text(
+                "Vaccinations:",
+                20,
+                y
+            );
+
+            y += 6;
+
+            goat.vaccinations.forEach(vaccine => {
+
+                if (y > 270) {
+
+                    doc.addPage();
+
+                    y = 20;
+                }
+
+                doc.text(
+                    `• ${vaccine.name} (${vaccine.date})`,
+                    25,
+                    y
+                );
+
+                y += 6;
+            });
+        }
+
+        /* WEIGHTS */
+
+        if (
+            goat.weights &&
+            goat.weights.length > 0
+        ) {
+
+            doc.text(
+                "Weight History:",
+                20,
+                y
+            );
+
+            y += 6;
+
+            goat.weights.forEach(weight => {
+
+                if (y > 270) {
+
+                    doc.addPage();
+
+                    y = 20;
+                }
+
+                doc.text(
+                    `• ${weight.weight} KG (${weight.date})`,
+                    25,
+                    y
+                );
+
+                y += 6;
+            });
+        }
+
+        /* HEALTH */
+
+        if (
+            goat.healthRecords &&
+            goat.healthRecords.length > 0
+        ) {
+
+            doc.text(
+                "Health Records:",
+                20,
+                y
+            );
+
+            y += 6;
+
+            goat.healthRecords.forEach(record => {
+
+                if (y > 270) {
+
+                    doc.addPage();
+
+                    y = 20;
+                }
+
+                doc.text(
+                    `• ${record.problem} | ${record.medicine}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Date: ${record.date}`,
+                    25,
+                    y
+                );
+
+                y += 8;
+            });
+        }
+
+        /* BREEDING */
+
+        if (
+            goat.breedingRecords &&
+            goat.breedingRecords.length > 0
+        ) {
+
+            doc.text(
+                "Breeding Records:",
+                20,
+                y
+            );
+
+            y += 6;
+
+            goat.breedingRecords.forEach(record => {
+
+                if (y > 270) {
+
+                    doc.addPage();
+
+                    y = 20;
+                }
+
+                doc.text(
+                    `• Mating: ${record.matingDate}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Pregnancy: ${record.pregnancyStatus}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Delivery: ${record.deliveryDate}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Birth: ${record.givenBirth}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Kids: ${record.kidsType}`,
+                    25,
+                    y
+                );
+
+                y += 8;
+            });
+        }
+
+        /* SALES */
+
+        if (
+            goat.saleRecords &&
+            goat.saleRecords.length > 0
+        ) {
+
+            doc.text(
+                "Sale Records:",
+                20,
+                y
+            );
+
+            y += 6;
+
+            goat.saleRecords.forEach(record => {
+
+                if (y > 270) {
+
+                    doc.addPage();
+
+                    y = 20;
+                }
+
+                const profit =
+                    Number(record.salePrice)
+                    -
+                    Number(record.purchasePrice);
+
+                doc.text(
+                    `• Purchase: ₹${record.purchasePrice}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Sale: ₹${record.salePrice}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Profit: ₹${profit}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Buyer: ${record.buyer}`,
+                    25,
+                    y
+                );
+
+                y += 6;
+
+                doc.text(
+                    `Sale Date: ${record.saleDate || "N/A"}`,
+                    25,
+                    y
+                );
+
+                y += 8;
+            });
+        }
+
+        doc.line(20, y, 190, y);
+
+        y += 12;
+    });
+
+    /* DOWNLOAD FILE */
+
+    doc.save(
+        `${goatTag}_${formattedDate}_report.pdf`
+    );
+}
+/*---------------------------------------------------*/
+/* CHILD TAG INPUTS */
+
+function generateChildTagInputs() {
+
+    const kidsType =
+        document.getElementById(
+            "kidsType"
+        ).value;
+
+    const container =
+        document.getElementById(
+            "childTagsContainer"
+        );
+
+    container.innerHTML = "";
+
+    let count = 0;
+
+    if (kidsType === "Single") {
+
+        count = 1;
+    }
+
+    else if (
+        kidsType === "Double"
+    ) {
+
+        count = 2;
+    }
+
+    else if (
+        kidsType === "Triplet"
+    ) {
+
+        count = 3;
+    }
+
+    for (
+        let i = 1;
+        i <= count;
+        i++
+    ) {
+
+        container.innerHTML += `
+
+            <input
+                type="text"
+                id="childTag${i}"
+                placeholder="Child Tag ${i}"
+            >
+        `;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+function searchGoats() {
+
+    const searchText =
+        document.getElementById(
+            "searchBox"
+        )
+        .value
+        .toLowerCase();
+
+    const filtered =
+        goats.filter(goat =>
+
+            goat.tag
+                .toLowerCase()
+                .includes(searchText)
+
+            ||
+
+            goat.breed
+                .toLowerCase()
+                .includes(searchText)
+        );
+    currentFilteredGoats = filtered;
+    renderGoats(filtered);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function closeSaleModal() {
+
+    document.getElementById(
+        "saleModal"
+    ).style.display = "none";
+
+    document.getElementById(
+        "purchasePrice"
+    ).value = "";
+
+    document.getElementById(
+        "salePrice"
+    ).value = "";
+
+    document.getElementById(
+        "buyerName"
+    ).value = "";
+
+    document.getElementById(
+        "saleDate"
     ).value = "";
 }
 
@@ -1369,18 +2926,70 @@ async function downloadPDF() {
 }
 
 /* BACKUP */
+/* BACKUP DATA */
 
 function backupData() {
 
+    /* CHECK DATA */
+
+    if (
+        goats.length === 0
+        &&
+        expenses.length === 0
+        &&
+        incomes.length === 0
+    ) {
+
+        alert(
+            "No data available for backup"
+        );
+
+        return;
+    }
+
+    /* DATE */
+
+    const today =
+        new Date();
+
+    const day =
+        String(today.getDate())
+        .padStart(2, "0");
+
+    const month =
+        String(today.getMonth() + 1)
+        .padStart(2, "0");
+
+    const year =
+        today.getFullYear();
+
+    const formattedDate =
+        `${day}${month}${year}`;
+
+    /* COMPLETE BACKUP */
+
     const data = {
 
-        goats,
-        expenses,
-        incomes
+        goats:
+            goats || [],
+
+        expenses:
+            expenses || [],
+
+        incomes:
+            incomes || []
     };
 
+    /* JSON FORMAT */
+
     const jsonData =
-        JSON.stringify(data);
+        JSON.stringify(
+            data,
+            null,
+            2
+        );
+
+    /* FILE */
 
     const blob =
         new Blob(
@@ -1400,57 +3009,138 @@ function backupData() {
     a.href = url;
 
     a.download =
-        "SPGoatFarmBackup.json";
+        `SPGoatFarmBackup_${formattedDate}.json`;
+
+    document.body.appendChild(a);
 
     a.click();
 
+    document.body.removeChild(a);
+
     URL.revokeObjectURL(url);
+
+    alert(
+        "Backup Downloaded Successfully"
+    );
 }
 
-/* RESTORE */
+/* RESTORE DATA */
 
 function restoreData(event) {
 
     const file =
         event.target.files[0];
 
-    if (!file) return;
+    if (!file) {
+
+        alert(
+            "No backup file selected"
+        );
+
+        return;
+    }
 
     const reader =
         new FileReader();
 
     reader.onload = function(e) {
 
-        const data =
-            JSON.parse(
-                e.target.result
+        try {
+
+            const data =
+                JSON.parse(
+                    e.target.result
+                );
+
+            /* VALIDATION */
+
+            if (
+                typeof data !== "object"
+            ) {
+
+                alert(
+                    "Invalid backup file"
+                );
+
+                return;
+            }
+
+            /* CONFIRM */
+
+            const confirmRestore =
+                confirm(
+
+                    "Restoring backup will replace all current data. Continue?"
+                );
+
+            if (!confirmRestore) {
+
+                return;
+            }
+
+            /* RESTORE */
+
+            goats =
+                data.goats || [];
+
+            expenses =
+                data.expenses || [];
+
+            incomes =
+                data.incomes || [];
+
+            /* FIX MISSING ARRAYS */
+
+            goats.forEach(goat => {
+
+                if (!goat.vaccinations)
+                    goat.vaccinations = [];
+
+                if (!goat.weights)
+                    goat.weights = [];
+
+                if (!goat.healthRecords)
+                    goat.healthRecords = [];
+
+                if (!goat.breedingRecords)
+                    goat.breedingRecords = [];
+
+                if (!goat.saleRecords)
+                    goat.saleRecords = [];
+            });
+
+            /* SAVE */
+
+            saveData();
+
+            /* REFRESH */
+
+            renderGoats();
+
+            renderExpenses();
+
+            renderIncome();
+
+            updateDashboard();
+
+            renderDashboardAlerts();
+
+            alert(
+                "Backup Restored Successfully!"
             );
 
-        goats =
-            data.goats || [];
+        } catch (error) {
 
-        expenses =
-            data.expenses || [];
+            console.error(error);
 
-        incomes =
-            data.incomes || [];
-
-        saveData();
-
-        renderGoats();
-
-        renderExpenses();
-
-        renderIncome();
-
-        alert(
-            "Backup Restored!"
-        );
+            alert(
+                "Invalid or Corrupted Backup File"
+            );
+        }
     };
 
     reader.readAsText(file);
 }
-
 /* INITIALIZE */
 
 renderGoats();
