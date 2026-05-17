@@ -41,11 +41,22 @@
 
     <div id="loginPage">
 
-        <div class="login-card">
+    <div class="login-card">
 
-            <i class="fa-solid fa-shield-halved login-icon"></i>
+        <div class="login-overlay">
 
-            <h1>SP Goat Farm</h1>
+            <img
+                src="icon.png"
+                class="login-logo"
+            >
+
+            <h1>
+                SP Goat Farm
+            </h1>
+
+            <p>
+                Smart Goat Management
+            </p>
 
             <input
                 type="password"
@@ -61,6 +72,8 @@
 
     </div>
 
+</div>
+
     <!-- MAIN APP -->
 
     <div id="mainApp" style="display:none;">
@@ -69,16 +82,37 @@
 
         <div class="top-header">
 
+           <div class="app-header">
+
+    <div class="logo-section">
+
+        <img
+            src="icon.png"
+            class="app-logo"
+        >
+
+        <div class="title-section">
+
             <h1>
-                🐐 SP Goat Farm
+                SP Goat Farm
             </h1>
 
-            <button
-                class="dark-btn"
-                onclick="toggleDarkMode()"
-            >
-                <i class="fa-solid fa-moon"></i>
-            </button>
+            <p>
+                Smart Goat Management
+            </p>
+
+        </div>
+
+    </div>
+
+    <button
+        class="dark-mode-btn"
+        onclick="toggleDarkMode()"
+    >
+        🌙
+    </button>
+
+</div>
 
         </div>
 
@@ -206,7 +240,17 @@
                 placeholder="Search goats..."
                 onkeyup="searchGoats()"
             >
+           <div class="download-section">
 
+    <button onclick="downloadAllGoats()">
+        ⬇ Download All Goats
+    </button>
+
+    <button onclick="downloadFilteredGoats()">
+        🔍 Download Search Result
+    </button>
+
+</div>
             <div id="goatList"></div>
 
         </div>
@@ -365,6 +409,264 @@
 </div>
 
 <script src="script.js"></script>
+<!-- Vaccine Modal -->
 
+<div
+    id="vaccineModal"
+    class="modal"
+>
+
+    <div class="modal-content">
+
+        <h2>
+            Add Vaccination
+        </h2>
+
+        <input
+            type="text"
+            id="vaccineName"
+            placeholder="Vaccine Name"
+        >
+
+        <input
+            type="date"
+            id="vaccineDate"
+        >
+
+        <button
+            onclick="saveVaccination()"
+        >
+            Save Vaccine
+        </button>
+
+        <button
+            onclick="closeVaccineModal()"
+        >
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+
+<!-- Weight Modal -->
+
+<div
+    id="weightModal"
+    class="modal"
+>
+
+    <div class="modal-content">
+
+        <h2>
+            Add Weight
+        </h2>
+
+        <input
+            type="number"
+            id="weightValue"
+            placeholder="Weight in KG"
+        >
+
+        <input
+            type="date"
+            id="weightDate"
+        >
+
+        <button
+            onclick="saveWeight()"
+        >
+            Save Weight
+        </button>
+
+        <button
+            onclick="closeWeightModal()"
+        >
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+<!-- HEALTH MODAL -->
+
+<div id="healthModal" class="modal">
+
+    <div class="modal-content">
+
+        <h2>Add Health Record</h2>
+
+        <input
+            type="text"
+            id="healthProblem"
+            placeholder="Health Problem"
+        >
+
+        <input
+            type="text"
+            id="healthMedicine"
+            placeholder="Medicine"
+        >
+
+        <input
+            type="date"
+            id="healthDate"
+        >
+
+        <button onclick="saveHealthRecord()">
+            Save
+        </button>
+
+        <button onclick="closeHealthModal()">
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+
+<!-- BREEDING MODAL -->
+
+<div id="breedingModal" class="modal">
+
+    <div class="modal-content">
+
+        <h2>Add Breeding</h2>
+
+        <input
+            type="date"
+            id="matingDate"
+        >
+
+        <select id="pregnancyStatus">
+
+            <option value="">
+                Pregnancy Status
+            </option>
+
+            <option value="Yes">
+                Yes
+            </option>
+
+            <option value="No">
+                No
+            </option>
+
+        </select>
+
+        <button onclick="saveBreedingRecord()">
+            Save
+        </button>
+
+        <button onclick="closeBreedingModal()">
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+
+<!-- BIRTH MODAL -->
+
+<div id="birthModal" class="modal">
+
+    <div class="modal-content">
+
+        <h2>Update Birth</h2>
+
+        <select id="givenBirth">
+
+            <option value="">
+                Given Birth?
+            </option>
+
+            <option value="Yes">
+                Yes
+            </option>
+
+            <option value="No">
+                No
+            </option>
+
+        </select>
+<select
+    id="kidsType"
+    onchange="generateChildTagInputs()"
+>
+
+    <option value="">
+        Select Kids Type
+    </option>
+
+    <option value="Single">
+        Single
+    </option>
+
+    <option value="Double">
+        Double
+    </option>
+
+    <option value="Triplet">
+        Triplet
+    </option>
+
+</select>
+        <div id="childTagsContainer"></div>
+        <button onclick="saveBirthRecord()">
+            Save
+        </button>
+
+        <button onclick="closeBirthModal()">
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+
+<!-- SALE MODAL -->
+<div id="saleModal" class="modal">
+
+    <div class="modal-content">
+
+        <h2>Add Sale Record</h2>
+
+        <input
+            type="number"
+            id="purchasePrice"
+            placeholder="Purchase Price"
+        >
+
+        <input
+            type="number"
+            id="salePrice"
+            placeholder="Sale Price"
+        >
+
+        <input
+            type="text"
+            id="buyerName"
+            placeholder="Buyer Name"
+        >
+
+        <input
+            type="date"
+            id="saleDate"
+        >
+
+        <button onclick="saveSaleRecord()">
+            Save
+        </button>
+
+        <button onclick="closeSaleModal()">
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
