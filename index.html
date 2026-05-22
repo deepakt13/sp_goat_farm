@@ -12,18 +12,28 @@
 
     <title>SP Goat Farm</title>
 
-    <link rel="stylesheet" href="style.css">
+    <!-- CSS -->
 
-    <link rel="manifest" href="manifest.json">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 
-    <!-- FONT AWESOME ICONS -->
+    <!-- PWA -->
+
+    <link
+        rel="manifest"
+        href="manifest.json"
+    >
+
+    <!-- FONT AWESOME -->
 
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     >
 
-    <!-- CHART.JS -->
+    <!-- CHART JS -->
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -37,35 +47,62 @@
 
 <div class="container">
 
-    <!-- LOGIN PAGE -->
-
-    <div id="loginPage">
+    <!-- =========================
+         LOGIN PAGE
+    ========================== -->
+<div id="loginPage">
 
     <div class="login-card">
 
         <div class="login-overlay">
+
+            <!-- TOP GLOW -->
+
+            <div class="login-glow"></div>
+
+            <!-- LOGO -->
 
             <img
                 src="icon.png"
                 class="login-logo"
             >
 
-            <h1>
+            <!-- TITLE -->
+
+            <h1 class="modern-title">
+
                 SP Goat Farm
+
             </h1>
 
-            <p>
+            <p class="modern-subtitle">
+
                 Smart Goat Management
+
             </p>
 
-            <input
-                type="password"
-                id="pinInput"
-                placeholder="Enter PIN"
-            >
+            <!-- INPUT -->
+
+            <div class="input-wrapper">
+
+                <i class="fa-solid fa-lock"></i>
+
+                <input
+                    type="password"
+                    id="pinInput"
+                    placeholder="Enter Secure PIN"
+                >
+
+            </div>
+
+            <!-- BUTTON -->
 
             <button onclick="login()">
+
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+
                 Login
+
             </button>
 
         </div>
@@ -74,53 +111,66 @@
 
 </div>
 
-    <!-- MAIN APP -->
+    <!-- =========================
+         MAIN APP
+    ========================== -->
 
-    <div id="mainApp" style="display:none;">
-
-        <!-- TOP HEADER -->
-
-        <div class="top-header">
-
-           <div class="app-header">
-
-    <div class="logo-section">
-
-        <img
-            src="icon.png"
-            class="app-logo"
-        >
-
-        <div class="title-section">
-
-            <h1>
-                SP Goat Farm
-            </h1>
-
-            <p>
-                Smart Goat Management
-            </p>
-
-        </div>
-
-    </div>
-
-    <button
-        class="dark-mode-btn"
-        onclick="toggleDarkMode()"
+    <div
+        id="mainApp"
+        style="display:none;"
     >
-        🌙
-    </button>
+
+        <!-- =========================
+             HEADER
+        ========================== -->
+
+        <div class="app-header">
+
+            <div class="logo-section">
+
+                <img
+                    src="icon.png"
+                    class="app-logo"
+                >
+
+                <div class="title-section">
+
+    <h1 class="modern-title">
+
+        SP Goat Farm
+
+    </h1>
+
+    <p class="modern-subtitle">
+
+        Smart Goat Management
+
+    </p>
 
 </div>
 
+            </div>
+
+            <button
+                class="dark-mode-btn"
+                onclick="toggleDarkMode()"
+            >
+                🌙
+            </button>
+
         </div>
 
-        <!-- DASHBOARD PAGE -->
+        <!-- =========================
+             DASHBOARD PAGE
+        ========================== -->
 
         <div id="dashboardPage">
+
             <div id="dashboardAlerts"></div>
-            <h2>Dashboard</h2>
+
+            <h2>
+                Dashboard
+            </h2>
 
             <!-- DASHBOARD CARDS -->
 
@@ -186,13 +236,22 @@
 
         </div>
 
-        <!-- GOAT PAGE -->
+        <!-- =========================
+             GOAT PAGE
+        ========================== -->
 
-        <div id="goatPage" style="display:none;">
-
-            <h2>Goat Information</h2>
+        <div
+            id="goatPage"
+            style="display:none;"
+        >
 
             <div class="form-box">
+
+                <h2>
+                    Goat Information
+                </h2>
+
+                <!-- GOAT TAG -->
 
                 <input
                     type="text"
@@ -200,23 +259,178 @@
                     placeholder="Goat Tag"
                 >
 
-                <input
-                    type="text"
+                <!-- BREED -->
+
+                <label class="input-label">
+
+                    Goat Breed
+
+                </label>
+
+                <select
                     id="breed"
-                    placeholder="Breed"
+                    onchange="toggleCustomBreed()"
                 >
+
+                    <option value="">
+                        Select Breed
+                    </option>
+
+                    <option value="Attappady Black">
+                        Attappady Black
+                    </option>
+
+                    <option value="Barbari">
+                        Barbari
+                    </option>
+
+                    <option value="Beetal">
+                        Beetal
+                    </option>
+
+                    <option value="Black Bengal">
+                        Black Bengal
+                    </option>
+
+                    <option value="Bidri">
+                        Bidri
+                    </option>
+
+                    <option value="Changthangi">
+                        Changthangi
+                    </option>
+
+                    <option value="Chegu">
+                        Chegu
+                    </option>
+
+                    <option value="Gaddi">
+                        Gaddi
+                    </option>
+
+                    <option value="Ganjam">
+                        Ganjam
+                    </option>
+
+                    <option value="Jakhrana">
+                        Jakhrana
+                    </option>
+
+                    <option value="Jamunapari">
+                        Jamunapari
+                    </option>
+
+                    <option value="Kanni Aadu">
+                        Kanni Aadu
+                    </option>
+
+                    <option value="Kodi Aadu">
+                        Kodi Aadu
+                    </option>
+
+                    <option value="Kutchi">
+                        Kutchi
+                    </option>
+
+                    <option value="Malabari (Tellicherry)">
+                        Malabari (Tellicherry)
+                    </option>
+
+                    <option value="Marwari">
+                        Marwari
+                    </option>
+
+                    <option value="Mehsana">
+                        Mehsana
+                    </option>
+
+                    <option value="Osmanabadi">
+                        Osmanabadi
+                    </option>
+
+                    <option value="Pantja">
+                        Pantja
+                    </option>
+
+                    <option value="Salem Black">
+                        Salem Black
+                    </option>
+
+                    <option value="Sangamneri">
+                        Sangamneri
+                    </option>
+
+                    <option value="Sirohi">
+                        Sirohi
+                    </option>
+
+                    <option value="Surti">
+                        Surti
+                    </option>
+
+                    <option value="Zalawadi">
+                        Zalawadi
+                    </option>
+
+                    <option value="Custom">
+                        Other / Custom Breed
+                    </option>
+
+                </select>
+
+                <!-- CUSTOM BREED -->
 
                 <input
                     type="text"
-                    id="gender"
-                    placeholder="Gender"
+                    id="customBreed"
+                    placeholder="Enter Custom Breed"
+                    style="display:none;"
                 >
+
+                <!-- GENDER -->
+
+                <label class="input-label">
+
+                    Gender
+
+                </label>
+
+                <select id="gender">
+
+                    <option value="">
+                        Select Gender
+                    </option>
+
+                    <option value="Male">
+                        Male
+                    </option>
+
+                    <option value="Female">
+                        Female
+                    </option>
+
+                </select>
+
+                <!-- DOB -->
+
+                <label class="input-label">
+
+                    Birth Date
+
+                </label>
 
                 <input
                     type="date"
                     id="dob"
-
                 >
+
+                <!-- IMAGE -->
+
+                <label class="input-label">
+
+                    Goat Image
+
+                </label>
 
                 <input
                     type="file"
@@ -224,15 +438,23 @@
                     accept="image/*"
                 >
 
+                <!-- BUTTON -->
+
                 <button onclick="addGoat()">
+
                     Add Goat
+
                 </button>
 
             </div>
 
+            <!-- TOTAL -->
+
             <p id="totalGoats">
                 Total Goats: 0
             </p>
+
+            <!-- SEARCH -->
 
             <input
                 type="text"
@@ -240,30 +462,45 @@
                 placeholder="Search goats..."
                 onkeyup="searchGoats()"
             >
-           <div class="download-section">
 
-    <button onclick="downloadAllGoats()">
-        ⬇ Download All Goats
-    </button>
+            <!-- DOWNLOAD -->
 
-    <button onclick="downloadFilteredGoats()">
-        🔍 Download Search Result
-    </button>
+            <div class="download-section">
 
-</div>
+                <button onclick="downloadAllGoats()">
+                    ⬇ Download All Goats
+                </button>
+
+                <button onclick="downloadFilteredGoats()">
+                    🔍 Download Search Result
+                </button>
+
+            </div>
+
+            <!-- GOAT LIST -->
+
             <div id="goatList"></div>
 
         </div>
 
-        <!-- BUSINESS PAGE -->
+        <!-- =========================
+             BUSINESS PAGE
+        ========================== -->
 
-        <div id="businessPage" style="display:none;">
+        <div
+            id="businessPage"
+            style="display:none;"
+        >
 
-            <h2>Business Management</h2>
+            <h2>
+                Business Management
+            </h2>
 
             <!-- EXPENSE -->
 
-            <h3>Farm Expenses</h3>
+            <h3>
+                Farm Expenses
+            </h3>
 
             <div class="form-box">
 
@@ -291,11 +528,11 @@
 
             <div id="expenseList"></div>
 
-            <hr>
-
             <!-- INCOME -->
 
-            <h3>Farm Income</h3>
+            <h3>
+                Farm Income
+            </h3>
 
             <div class="form-box">
 
@@ -329,25 +566,34 @@
 
         </div>
 
-        <!-- BACKUP PAGE -->
+        <!-- =========================
+             BACKUP PAGE
+        ========================== -->
 
-        <div id="backupPage" style="display:none;">
+        <div
+            id="backupPage"
+            style="display:none;"
+        >
 
-            <h2>Backup & Reports</h2>
+            <h2>
+                Backup & Reports
+            </h2>
 
             <button onclick="downloadPDF()">
-                <i class="fa-solid fa-file-pdf"></i>
-                Download PDF
-            </button>
 
-            <br><br>
+                <i class="fa-solid fa-file-pdf"></i>
+
+                Download PDF
+
+            </button>
 
             <button onclick="backupData()">
-                <i class="fa-solid fa-download"></i>
-                Backup Data
-            </button>
 
-            <br><br>
+                <i class="fa-solid fa-download"></i>
+
+                Backup Data
+
+            </button>
 
             <input
                 type="file"
@@ -357,16 +603,31 @@
 
         </div>
 
-        <!-- FLOATING BUTTON -->
+        <!-- =========================
+             FLOATING BUTTON
+        ========================== -->
+<!-- SEARCH FAB -->
 
+<button
+    class="search-fab"
+    onclick="scrollToSearch()"
+>
+
+    <i class="fa-solid fa-magnifying-glass"></i>
+
+</button>
         <button
             class="fab"
             onclick="showPage('goatPage')"
         >
+
             <i class="fa-solid fa-plus"></i>
+
         </button>
 
-        <!-- BOTTOM NAVIGATION -->
+        <!-- =========================
+             BOTTOM NAV
+        ========================== -->
 
         <div class="bottom-nav">
 
@@ -408,8 +669,9 @@
 
 </div>
 
-<script src="script.js"></script>
-<!-- Vaccine Modal -->
+<!-- =========================
+     VACCINE MODAL
+========================= -->
 
 <div
     id="vaccineModal"
@@ -433,15 +695,11 @@
             id="vaccineDate"
         >
 
-        <button
-            onclick="saveVaccination()"
-        >
+        <button onclick="saveVaccination()">
             Save Vaccine
         </button>
 
-        <button
-            onclick="closeVaccineModal()"
-        >
+        <button onclick="closeVaccineModal()">
             Cancel
         </button>
 
@@ -449,7 +707,9 @@
 
 </div>
 
-<!-- Weight Modal -->
+<!-- =========================
+     WEIGHT MODAL
+========================= -->
 
 <div
     id="weightModal"
@@ -473,28 +733,32 @@
             id="weightDate"
         >
 
-        <button
-            onclick="saveWeight()"
-        >
+        <button onclick="saveWeight()">
             Save Weight
         </button>
 
-        <button
-            onclick="closeWeightModal()"
-        >
+        <button onclick="closeWeightModal()">
             Cancel
         </button>
 
     </div>
 
 </div>
-<!-- HEALTH MODAL -->
 
-<div id="healthModal" class="modal">
+<!-- =========================
+     HEALTH MODAL
+========================= -->
+
+<div
+    id="healthModal"
+    class="modal"
+>
 
     <div class="modal-content">
 
-        <h2>Add Health Record</h2>
+        <h2>
+            Add Health Record
+        </h2>
 
         <input
             type="text"
@@ -525,18 +789,30 @@
 
 </div>
 
-<!-- BREEDING MODAL -->
+<!-- =========================
+     BREEDING MODAL
+========================= -->
 
-<div id="breedingModal" class="modal">
+<div
+    id="breedingModal"
+    class="modal"
+>
 
     <div class="modal-content">
 
-        <h2>Add Breeding</h2>
+        <h2>
+            Add Breeding
+        </h2>
 
         <input
             type="date"
             id="matingDate"
         >
+        <input
+    type="text"
+    id="fatherTag"
+    placeholder="Father Tag Number"
+>
 
         <select id="pregnancyStatus">
 
@@ -566,13 +842,57 @@
 
 </div>
 
-<!-- BIRTH MODAL -->
+<!-- FAMILY TREE MODAL -->
 
-<div id="birthModal" class="modal">
+<div
+    id="familyTreeModal"
+    class="modal"
+>
+
+    <div
+        class="modal-content family-tree-modal"
+    >
+
+        <h2>
+
+            🌳 Family Tree
+
+        </h2>
+
+        <!-- TREE CONTENT -->
+
+        <div id="familyTreeContainer">
+
+        </div>
+
+        <!-- CLOSE BUTTON -->
+
+        <button
+            onclick="closeFamilyTree()"
+        >
+
+            Close
+
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     BIRTH MODAL
+========================= -->
+
+<div
+    id="birthModal"
+    class="modal"
+>
 
     <div class="modal-content">
 
-        <h2>Update Birth</h2>
+        <h2>
+            Update Birth
+        </h2>
 
         <select id="givenBirth">
 
@@ -589,29 +909,32 @@
             </option>
 
         </select>
-<select
-    id="kidsType"
-    onchange="generateChildTagInputs()"
->
 
-    <option value="">
-        Select Kids Type
-    </option>
+        <select
+            id="kidsType"
+            onchange="generateChildTagInputs()"
+        >
 
-    <option value="Single">
-        Single
-    </option>
+            <option value="">
+                Select Kids Type
+            </option>
 
-    <option value="Double">
-        Double
-    </option>
+            <option value="Single">
+                Single
+            </option>
 
-    <option value="Triplet">
-        Triplet
-    </option>
+            <option value="Double">
+                Double
+            </option>
 
-</select>
+            <option value="Triplet">
+                Triplet
+            </option>
+
+        </select>
+
         <div id="childTagsContainer"></div>
+
         <button onclick="saveBirthRecord()">
             Save
         </button>
@@ -624,12 +947,20 @@
 
 </div>
 
-<!-- SALE MODAL -->
-<div id="saleModal" class="modal">
+<!-- =========================
+     SALE MODAL
+========================= -->
+
+<div
+    id="saleModal"
+    class="modal"
+>
 
     <div class="modal-content">
 
-        <h2>Add Sale Record</h2>
+        <h2>
+            Add Sale Record
+        </h2>
 
         <input
             type="number"
@@ -665,8 +996,10 @@
     </div>
 
 </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- SCRIPT -->
+
+<script src="script.js"></script>
+
 </body>
 </html>
