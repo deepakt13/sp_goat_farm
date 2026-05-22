@@ -425,12 +425,10 @@ function renderGoats(filteredGoats = goats) {
 
     filteredGoats.forEach((goat) => {
 
-        /* ORIGINAL INDEX FIX */
-
         const originalIndex =
-            goats.findIndex(
-                g => g.tag === goat.tag
-            );
+            goats.indexOf(goat);
+
+        /* ARRAYS */
 
         if (!goat.vaccinations)
             goat.vaccinations = [];
@@ -447,235 +445,17 @@ function renderGoats(filteredGoats = goats) {
         if (!goat.saleRecords)
             goat.saleRecords = [];
 
-        let vaccineHTML = "";
-
-        /* VACCINATION */
-
-        if (
-            goat.vaccinations &&
-            goat.vaccinations.length > 0
-        ) {
-
-            vaccineHTML += `
-                <h4>
-                    Vaccinations
-                </h4>
-            `;
-
-            goat.vaccinations.forEach(vaccine => {
-
-                vaccineHTML += `
-
-                    • ${vaccine.name}
-
-                    <br>
-
-                    Date:
-                    ${vaccine.date}
-
-                    <br><br>
-                `;
-            });
-        }
-
-        let weightHTML = "";
-
-        /* WEIGHT */
-
-        if (
-            goat.weights &&
-            goat.weights.length > 0
-        ) {
-
-            weightHTML += `
-                <h4>
-                    Weight History
-                </h4>
-            `;
-
-            goat.weights.forEach(weight => {
-
-                weightHTML += `
-
-                    • ${weight.weight} KG
-
-                    <br>
-
-                    Date:
-                    ${weight.date}
-
-                    <br><br>
-                `;
-            });
-        }
-
-        let healthHTML = "";
-
-        /* HEALTH */
-
-        if (
-            goat.healthRecords &&
-            goat.healthRecords.length > 0
-        ) {
-
-            healthHTML += `
-                <h4>
-                    Health Records
-                </h4>
-            `;
-
-            goat.healthRecords.forEach(record => {
-
-                healthHTML += `
-
-                    • ${record.problem}
-
-                    <br>
-
-                    Medicine:
-                    ${record.medicine}
-
-                    <br>
-
-                    Date:
-                    ${record.date}
-
-                    <br><br>
-                `;
-            });
-        }
-
-        let breedingHTML = "";
-
-        /* BREEDING */
-
-        if (
-            goat.breedingRecords &&
-            goat.breedingRecords.length > 0
-        ) {
-
-            breedingHTML += `
-                <h4>
-                    Breeding Records
-                </h4>
-            `;
-
-            goat.breedingRecords.forEach(record => {
-
-                breedingHTML += `
-
-                    • Mating Date:
-                    ${record.matingDate}
-
-                    <br>
-
-                    Pregnancy:
-                    ${record.pregnancyStatus}
-
-                    <br>
-
-                    Expected Delivery:
-                    ${record.deliveryDate}
-
-                    <br>
-
-                    Given Birth:
-                    ${record.givenBirth}
-
-                    <br>
-
-                    Kids:
-                    ${record.kidsType}
-                    <br>
-
-Children Tags:
-
-<br>
-
-${
-
-    record.childTags
-    &&
-    record.childTags.length > 0
-
-    ?
-
-    record.childTags.join("<br>")
-
-    :
-
-    "N/A"
-}
-
-
-
-                    <br><br>
-                `;
-            });
-        }
-
-        let saleHTML = "";
-
-        /* SALE */
-
-        if (
-            goat.saleRecords &&
-            goat.saleRecords.length > 0
-        ) {
-
-            saleHTML += `
-                <h4>
-                    Sale Records
-                </h4>
-            `;
-
-            goat.saleRecords.forEach(record => {
-
-                const profit =
-                    Number(record.salePrice)
-                    -
-                    Number(record.purchasePrice);
-
-                saleHTML += `
-
-                    Purchase:
-                    ₹${record.purchasePrice}
-
-                    <br>
-
-                    Sale:
-                    ₹${record.salePrice}
-
-                    <br>
-
-                    Buyer:
-                    ${record.buyer}
-
-                    <br>
-
-                    Sale Date:
-                    ${record.saleDate}
-
-                    <br>
-
-                    Profit:
-                    ₹${profit}
-
-                    <br><br>
-                `;
-            });
-        }
+        /* REMINDERS */
 
         let reminderHTML = "";
 
-        /* REMINDERS */
-
         const today = new Date();
 
-        /* VACCINATION REMINDER */
+        /* =========================
+           VACCINE REMINDER
+        ========================= */
 
         if (
-            goat.vaccinations &&
             goat.vaccinations.length > 0
         ) {
 
@@ -696,17 +476,21 @@ ${
                     nextVaccine.getDate() + 180
                 );
 
-                const timeDifference =
-                    nextVaccine.getTime()
-                    -
-                    today.getTime();
-
                 const diffDays =
                     Math.ceil(
-                        timeDifference
+
+                        (
+                            nextVaccine.getTime()
+                            -
+                            today.getTime()
+                        )
+
                         /
+
                         (1000 * 60 * 60 * 24)
                     );
+
+                /* DUE */
 
                 if (
                     diffDays >= 0
@@ -718,21 +502,21 @@ ${
 
                         <div style="
                             background:#fef3c7;
+                            color:#92400e;
                             padding:12px;
-                            border-radius:12px;
-                            margin-top:10px;
+                            border-radius:14px;
+                            margin-top:12px;
                             font-weight:bold;
                         ">
 
-                            🔔 Goat
-                            ${goat.tag}
-
-                            vaccine due in
+                            🔔 Vaccine due in
                             ${diffDays} days
 
                         </div>
                     `;
                 }
+
+                /* OVERDUE */
 
                 if (diffDays < 0) {
 
@@ -740,16 +524,14 @@ ${
 
                         <div style="
                             background:#fecaca;
+                            color:#991b1b;
                             padding:12px;
-                            border-radius:12px;
-                            margin-top:10px;
+                            border-radius:14px;
+                            margin-top:12px;
                             font-weight:bold;
                         ">
 
-                            ⚠ Goat
-                            ${goat.tag}
-
-                            vaccine overdue
+                            ⚠ Vaccine overdue
 
                         </div>
                     `;
@@ -757,10 +539,11 @@ ${
             }
         }
 
-        /* BREEDING REMINDER */
+        /* =========================
+           DELIVERY REMINDER
+        ========================= */
 
         if (
-            goat.breedingRecords &&
             goat.breedingRecords.length > 0
         ) {
 
@@ -771,6 +554,8 @@ ${
 
             if (
                 lastBreeding.pregnancyStatus
+                &&
+                lastBreeding.pregnancyStatus
                     .toLowerCase() === "yes"
                 &&
                 lastBreeding.givenBirth
@@ -779,18 +564,20 @@ ${
 
                 const deliveryDate =
                     new Date(
-                        lastBreeding.deliveryDate
+                        lastBreeding.expectedDelivery
                     );
-
-                const timeDifference =
-                    deliveryDate.getTime()
-                    -
-                    today.getTime();
 
                 const diffDelivery =
                     Math.ceil(
-                        timeDifference
+
+                        (
+                            deliveryDate.getTime()
+                            -
+                            today.getTime()
+                        )
+
                         /
+
                         (1000 * 60 * 60 * 24)
                     );
 
@@ -804,38 +591,15 @@ ${
 
                         <div style="
                             background:#dcfce7;
+                            color:#166534;
                             padding:12px;
-                            border-radius:12px;
-                            margin-top:10px;
+                            border-radius:14px;
+                            margin-top:12px;
                             font-weight:bold;
                         ">
 
-                            🐐 Goat
-                            ${goat.tag}
-
-                            delivery expected in
+                            🐐 Delivery expected in
                             ${diffDelivery} days
-
-                        </div>
-                    `;
-                }
-
-                if (diffDelivery < 0) {
-
-                    reminderHTML += `
-
-                        <div style="
-                            background:#fecaca;
-                            padding:12px;
-                            border-radius:12px;
-                            margin-top:10px;
-                            font-weight:bold;
-                        ">
-
-                            ⚠ Goat
-                            ${goat.tag}
-
-                            delivery overdue
 
                         </div>
                     `;
@@ -843,63 +607,548 @@ ${
             }
         }
 
+        /* =========================
+           GOAT CARD
+        ========================= */
+
         goatList.innerHTML += `
 
             <div class="goat-card">
 
-                <strong>Tag:</strong>
-                ${goat.tag}
+                <!-- HEADER -->
 
-                <br><br>
+                <div class="goat-header">
 
-                <strong>Breed:</strong>
-                ${goat.breed}
+                    <div>
 
-                <br><br>
+                        <h2 class="goat-tag">
 
-                <strong>Gender:</strong>
-                ${goat.gender}
+                            🐐 ${goat.tag}
 
-                <br><br>
+                        </h2>
 
-                <strong>DOB:</strong>
-                ${goat.dob}
+                        <span class="goat-badge">
 
-                <br><br>
+                            ${goat.gender}
 
-                <strong>Age:</strong>
-                ${calculateAge(goat.dob)}
+                        </span>
 
-                <br><br>
+                    </div>
 
-                ${goat.image
-                    ? `
-                        <img
-                            src="${goat.image}"
-                            class="goat-image"
-                        >
+                    <div class="goat-age">
+
+                        ${calculateAge(goat.dob)}
+
+                    </div>
+
+                </div>
+
+                <!-- IMAGE -->
+
+                ${
+                    goat.image
+
+                    ?
+
                     `
-                    : ""
+                    <img
+                        src="${goat.image}"
+                        class="goat-image"
+                    >
+                    `
+
+                    :
+
+                    ""
                 }
+
+                <!-- REMINDERS -->
 
                 ${reminderHTML}
 
-                ${vaccineHTML}
+                <!-- INFO GRID -->
 
-                ${weightHTML}
+                <div class="goat-info-grid">
 
-                ${healthHTML}
+                    <!-- BREED -->
 
-                ${breedingHTML}
+                    <div class="info-box">
 
-                ${saleHTML}
+                        <span class="info-label">
 
-                <div style="
-                    display:flex;
-                    gap:8px;
-                    flex-wrap:wrap;
-                    margin-top:12px;
-                ">
+                            Breed
+
+                        </span>
+
+                        <span class="info-value">
+
+                            ${goat.breed}
+
+                        </span>
+
+                    </div>
+
+                    <!-- DOB -->
+
+                    <div class="info-box">
+
+                        <span class="info-label">
+
+                            DOB
+
+                        </span>
+
+                        <span class="info-value">
+
+                            ${new Date(goat.dob)
+                                .toLocaleDateString(
+                                    "en-GB"
+                                )
+                            }
+
+                        </span>
+
+                    </div>
+
+                    <!-- STATUS -->
+
+                    <div class="info-box">
+
+                        <span class="info-label">
+
+                            Status
+
+                        </span>
+
+                        <span class="info-value">
+
+                            ${goat.status || "Active"}
+
+                        </span>
+
+                    </div>
+
+                    <!-- MOTHER -->
+
+                    ${
+                        goat.motherTag
+
+                        ?
+
+                        `
+                        <div class="info-box">
+
+                            <span class="info-label">
+
+                                Mother
+
+                            </span>
+
+                            <span
+                                class="info-value clickable-parent"
+                                onclick="openChildGoat('${goat.motherTag}')"
+                            >
+
+                                🐐 ${goat.motherTag}
+
+                            </span>
+
+                        </div>
+                        `
+
+                        :
+
+                        ""
+                    }
+
+                    <!-- FATHER -->
+
+                    ${
+                        goat.fatherTag
+
+                        ?
+
+                        `
+                        <div class="info-box">
+
+                            <span class="info-label">
+
+                                Father
+
+                            </span>
+
+                            <span
+                                class="info-value clickable-parent"
+                                onclick="openChildGoat('${goat.fatherTag}')"
+                            >
+
+                                🐐 ${goat.fatherTag}
+
+                            </span>
+
+                        </div>
+                        `
+
+                        :
+
+                        ""
+                    }
+
+                    <!-- CHILDREN -->
+
+                    ${
+                        goat.breedingRecords &&
+                        goat.breedingRecords.some(
+                            record =>
+                            record.childTags &&
+                            record.childTags.length > 0
+                        )
+
+                        ?
+
+                        `
+                        <div class="info-box child-info-box">
+
+                            <span class="info-label">
+
+                                Children
+
+                            </span>
+
+                            <div class="children-flow">
+
+                                ${
+                                    goat.breedingRecords
+                                    .map(record => {
+
+                                        if (
+                                            record.childTags &&
+                                            record.childTags.length > 0
+                                        ) {
+
+                                            return record.childTags
+                                            .map(tag => `
+
+                                                <div
+                                                    class="child-node"
+                                                    onclick="openChildGoat('${tag}')"
+                                                >
+
+                                                    🐐 ${tag}
+
+                                                </div>
+
+                                            `)
+                                            .join(`
+                                                <span class="flow-line">
+                                                    ➜
+                                                </span>
+                                            `);
+                                        }
+
+                                        return "";
+
+                                    }).join("")
+                                }
+
+                            </div>
+
+                        </div>
+                        `
+
+                        :
+
+                        ""
+                    }
+
+                </div>
+
+                <!-- VACCINATIONS -->
+
+                <div class="record-section">
+
+                    <h3>
+                        💉 Vaccinations
+                    </h3>
+
+                    ${
+                        goat.vaccinations.length > 0
+
+                        ?
+
+                        goat.vaccinations.map(v => `
+
+                            <div class="record-card">
+
+                                <strong>
+
+                                    ${v.name}
+
+                                </strong>
+
+                                <span>
+
+                                    ${v.date}
+
+                                </span>
+
+                            </div>
+
+                        `).join("")
+
+                        :
+
+                        "<p>No vaccination records</p>"
+                    }
+
+                </div>
+
+                <!-- WEIGHT -->
+
+                <div class="record-section">
+
+                    <h3>
+                        ⚖ Weight Records
+                    </h3>
+
+                    ${
+                        goat.weights.length > 0
+
+                        ?
+
+                        goat.weights.map(w => `
+
+                            <div class="record-card">
+
+                                <strong>
+
+                                    ${w.weight} KG
+
+                                </strong>
+
+                                <span>
+
+                                    ${w.date}
+
+                                </span>
+
+                            </div>
+
+                        `).join("")
+
+                        :
+
+                        "<p>No weight records</p>"
+                    }
+
+                </div>
+
+                <!-- HEALTH -->
+
+                <div class="record-section">
+
+                    <h3>
+                        🏥 Health Records
+                    </h3>
+
+                    ${
+                        goat.healthRecords.length > 0
+
+                        ?
+
+                        goat.healthRecords.map(h => `
+
+                            <div class="record-card">
+
+                                <strong>
+
+                                    ${h.problem}
+
+                                </strong>
+
+                                <span>
+
+                                    ${h.medicine}
+
+                                </span>
+
+                                <small>
+
+                                    ${h.date || "N/A"}
+
+                                </small>
+
+                            </div>
+
+                        `).join("")
+
+                        :
+
+                        "<p>No health records</p>"
+                    }
+
+                </div>
+
+                <!-- BREEDING -->
+
+                <div class="record-section">
+
+                    <h3>
+                        🍼 Breeding Records
+                    </h3>
+
+                    ${
+                        goat.breedingRecords.length > 0
+
+                        ?
+
+                        goat.breedingRecords.map(b => `
+
+                            <div class="record-card">
+
+                                <strong>
+
+                                    Mating:
+                                    ${b.matingDate}
+
+                                </strong>
+
+                                <span>
+
+                                    Father:
+                                    ${b.fatherTag || "N/A"}
+
+                                </span>
+
+                                <span>
+
+                                    Pregnancy:
+                                    ${b.pregnancyStatus}
+
+                                </span>
+
+                                <span>
+
+                                    Delivery:
+                                    ${b.expectedDelivery}
+
+                                </span>
+
+                                <span>
+
+                                    Birth:
+                                    ${b.givenBirth}
+
+                                </span>
+
+                                <span>
+
+                                    Kids:
+                                    ${b.kidsType}
+
+                                </span>
+
+                                <small>
+
+                                    Children:
+                                    ${
+                                        b.childTags &&
+                                        b.childTags.length > 0
+
+                                        ?
+
+                                        b.childTags.join(", ")
+
+                                        :
+
+                                        "N/A"
+                                    }
+
+                                </small>
+
+                            </div>
+
+                        `).join("")
+
+                        :
+
+                        "<p>No breeding records</p>"
+                    }
+
+                </div>
+
+                <!-- SALES -->
+
+                <div class="record-section">
+
+                    <h3>
+                        💰 Sale Records
+                    </h3>
+
+                    ${
+                        goat.saleRecords.length > 0
+
+                        ?
+
+                        goat.saleRecords.map(s => {
+
+                            const profit =
+                                Number(s.salePrice)
+                                -
+                                Number(s.purchasePrice);
+
+                            return `
+
+                                <div class="record-card">
+
+                                    <strong>
+
+                                        Sale:
+                                        ₹${s.salePrice}
+
+                                    </strong>
+
+                                    <span>
+
+                                        Purchase:
+                                        ₹${s.purchasePrice}
+
+                                    </span>
+
+                                    <span>
+
+                                        Profit:
+                                        ₹${profit}
+
+                                    </span>
+
+                                    <span>
+
+                                        Buyer:
+                                        ${s.buyerName || s.buyer}
+
+                                    </span>
+
+                                    <small>
+
+                                        ${s.saleDate || "N/A"}
+
+                                    </small>
+
+                                </div>
+                            `;
+                        }).join("")
+
+                        :
+
+                        "<p>No sale records</p>"
+                    }
+
+                </div>
+
+                <!-- ACTION BUTTONS -->
+
+                <div class="action-buttons">
 
                     <button onclick="editGoat(${originalIndex})">
                         ✏ Edit
@@ -932,6 +1181,11 @@ ${
                     <button onclick="addSaleRecord(${originalIndex})">
                         💰 Sale
                     </button>
+                    <button onclick="openFamilyTree('${goat.tag}')">
+
+    🌳 Family Tree
+
+</button>
 
                 </div>
 
@@ -940,28 +1194,310 @@ ${
     });
 }
 
-/* ADD GOAT */
+function openChildGoat(tag) {
 
+    /* FIND GOAT */
+
+    const goat =
+        goats.find(
+
+            g =>
+
+            g.tag.toLowerCase()
+            ===
+            tag.toLowerCase()
+        );
+
+    /* NOT FOUND */
+
+    if (!goat) {
+
+        alert(
+            "Child goat not found"
+        );
+
+        return;
+    }
+
+    /* OPEN GOAT PAGE */
+
+    showPage("goatPage");
+
+    /* SEARCH */
+
+    document.getElementById(
+        "searchBox"
+    ).value = tag;
+
+    /* RENDER */
+
+    renderGoats();
+
+    /* SCROLL TO GOAT */
+
+    setTimeout(() => {
+
+        const goatCards =
+            document.querySelectorAll(
+                ".goat-card"
+            );
+
+        goatCards.forEach(card => {
+
+            if (
+                card.innerText
+                .toLowerCase()
+                .includes(
+                    tag.toLowerCase()
+                )
+            ) {
+
+                card.scrollIntoView({
+
+                    behavior: "smooth",
+
+                    block: "center"
+                });
+
+                /* HIGHLIGHT */
+
+                card.style.boxShadow =
+                    "0 0 0 4px #22c55e";
+
+                setTimeout(() => {
+
+                    card.style.boxShadow =
+                        "";
+
+                }, 2000);
+            }
+        });
+
+    }, 300);
+}
+/* =========================
+   OPEN FAMILY TREE
+========================= */
+
+function openFamilyTree(tag) {
+
+    /* FIND GOAT */
+
+    const goat =
+        goats.find(
+
+            g =>
+
+            g.tag.toLowerCase()
+            ===
+            tag.toLowerCase()
+        );
+
+    if (!goat) {
+
+        alert(
+            "Goat not found"
+        );
+
+        return;
+    }
+
+    /* CONTAINER */
+
+    const container =
+        document.getElementById(
+            "familyTreeContainer"
+        );
+
+    /* CHILDREN */
+
+    const children =
+        goats.filter(
+
+            g =>
+
+            g.motherTag === goat.tag
+            ||
+            g.fatherTag === goat.tag
+        );
+
+    /* RENDER */
+
+    container.innerHTML = `
+
+        <div class="tree-wrapper">
+
+            <!-- FATHER -->
+
+            ${
+                goat.fatherTag
+
+                ?
+
+                `
+                <div
+    class="tree-node parent-node"
+    onclick="openFamilyTree('${goat.fatherTag}')"
+>
+
+                    🐐 Father
+
+                    <strong>
+
+                        ${goat.fatherTag}
+
+                    </strong>
+
+                </div>
+                `
+
+                :
+
+                ""
+            }
+
+            <!-- MOTHER -->
+
+            ${
+                goat.motherTag
+
+                ?
+
+                `
+                <div
+    class="tree-node parent-node"
+    onclick="openFamilyTree('${goat.motherTag}')"
+>
+                    🐐 Mother
+
+                    <strong>
+
+                        ${goat.motherTag}
+
+                    </strong>
+
+                </div>
+                `
+
+                :
+
+                ""
+            }
+
+            <!-- CURRENT GOAT -->
+
+            <div class="tree-node current-node">
+
+                🐐 ${goat.tag}
+
+            </div>
+
+            <!-- CHILDREN -->
+
+            <div class="children-tree">
+
+                ${
+                    children.length > 0
+
+                    ?
+
+                    children.map(child => `
+
+                        <div
+    class="tree-node child-tree-node"
+    onclick="openFamilyTree('${child.tag}')"
+>
+
+                            🐐 ${child.tag}
+
+                        </div>
+
+                    `).join("")
+
+                    :
+
+                    "<p>No children found</p>"
+                }
+
+            </div>
+
+        </div>
+    `;
+
+    /* OPEN MODAL */
+
+    document.getElementById(
+        "familyTreeModal"
+    ).style.display = "flex";
+}
+
+/* =========================
+   CLOSE FAMILY TREE
+========================= */
+
+function closeFamilyTree() {
+
+    document.getElementById(
+        "familyTreeModal"
+    ).style.display = "none";
+}
+
+
+/* ADD GOAT */
 function addGoat() {
 
     const tag =
-        document.getElementById("tag").value;
+        document.getElementById(
+            "tag"
+        ).value;
 
-    const breed =
-        document.getElementById("breed").value;
+    /* BREED */
+
+    let breed =
+        document.getElementById(
+            "breed"
+        ).value;
+
+    /* CUSTOM BREED */
+
+    if (breed === "Custom") {
+
+        breed =
+            document.getElementById(
+                "customBreed"
+            ).value;
+    }
 
     const gender =
-        document.getElementById("gender").value;
+        document.getElementById(
+            "gender"
+        ).value;
 
     const dob =
-        document.getElementById("dob").value;
+        document.getElementById(
+            "dob"
+        ).value;
 
     const imageInput =
-        document.getElementById("goatImage");
+        document.getElementById(
+            "goatImage"
+        );
 
-    if (!tag || !breed || !gender || !dob) {
+    /* VALIDATION */
 
-        alert("Please fill all fields");
+    if (
+        !tag
+        ||
+        !breed
+        ||
+        !gender
+        ||
+        !dob
+    ) {
+
+        alert(
+            "Please fill all fields"
+        );
 
         return;
     }
@@ -969,36 +1505,50 @@ function addGoat() {
     const file =
         imageInput.files[0];
 
+    /* IMAGE */
+
     if (file) {
 
         const reader =
             new FileReader();
 
-        reader.onload = function(e) {
+        reader.onload =
+            function(e) {
 
-            saveGoat(
-                tag,
-                breed,
-                gender,
-                dob,
-                e.target.result
-            );
-        };
+                saveGoat(
+
+                    tag,
+
+                    breed,
+
+                    gender,
+
+                    dob,
+
+                    e.target.result
+                );
+            };
 
         reader.readAsDataURL(file);
 
-    } else {
+    }
+
+    else {
 
         saveGoat(
+
             tag,
+
             breed,
+
             gender,
+
             dob,
+
             ""
         );
     }
 }
-
 /* SAVE GOAT */
 
 function saveGoat(
@@ -1350,15 +1900,24 @@ function saveBreedingRecord() {
             "matingDate"
         ).value;
 
+    const fatherTag =
+        document.getElementById(
+            "fatherTag"
+        ).value.trim();
+
     const pregnancyStatus =
         document.getElementById(
             "pregnancyStatus"
         ).value;
 
+    /* VALIDATION */
+
     if (
         !matingDate
         ||
         !pregnancyStatus
+        ||
+        !fatherTag
     ) {
 
         alert(
@@ -1380,9 +1939,12 @@ function saveBreedingRecord() {
         delivery.getDate() + 150
     );
 
-    const deliveryDate =
-        delivery.toISOString()
+    const expectedDelivery =
+        delivery
+        .toISOString()
         .split("T")[0];
+
+    /* CREATE ARRAY */
 
     if (
         !goats[currentBreedingIndex]
@@ -1393,17 +1955,34 @@ function saveBreedingRecord() {
             .breedingRecords = [];
     }
 
+    /* SAVE RECORD */
+
     goats[currentBreedingIndex]
         .breedingRecords.push({
 
-            matingDate,
-            pregnancyStatus,
-            deliveryDate,
+            matingDate:
+                matingDate,
 
-            givenBirth: "No",
+            fatherTag:
+                fatherTag,
 
-            kidsType: "Not Yet"
+            pregnancyStatus:
+                pregnancyStatus,
+
+            expectedDelivery:
+                expectedDelivery,
+
+            givenBirth:
+                "No",
+
+            kidsType:
+                "Not Yet",
+
+            childTags:
+                []
         });
+
+    /* SAVE */
 
     saveData();
 
@@ -1454,6 +2033,8 @@ function saveBirthRecord() {
             "kidsType"
         ).value;
 
+    /* VALIDATION */
+
     if (!givenBirth) {
 
         alert(
@@ -1476,6 +2057,8 @@ function saveBirthRecord() {
         return;
     }
 
+    /* CHECK BREEDING RECORD */
+
     if (
         !goats[currentBirthIndex]
         .breedingRecords
@@ -1491,117 +2074,82 @@ function saveBirthRecord() {
         return;
     }
 
+    /* LAST RECORD */
+
     const lastRecord =
         goats[currentBirthIndex]
         .breedingRecords[
-
             goats[currentBirthIndex]
             .breedingRecords.length - 1
         ];
 
-    /* UPDATE BIRTH STATUS */
+    /* SAVE STATUS */
 
     lastRecord.givenBirth =
         givenBirth;
 
-    if (
-        givenBirth === "Yes"
-    ) {
+    /* IF YES */
+
+    if (givenBirth === "Yes") {
 
         lastRecord.kidsType =
             kidsType;
 
-        /* CHILD TAGS */
+        /* GET CHILD INPUTS */
 
-        let childTags = [];
+        const childInputs =
+            document.querySelectorAll(
+                ".childTagInput"
+            );
+
+        const childTags = [];
+
+        childInputs.forEach(input => {
+
+            const value =
+                input.value.trim();
+
+            if (value) {
+
+                childTags.push(value);
+            }
+        });
+
+        /* EXPECTED COUNT */
+
+        let expectedCount = 0;
 
         if (kidsType === "Single") {
 
-            const tag1 =
-                document.getElementById(
-                    "childTag1"
-                ).value;
-
-            if (!tag1) {
-
-                alert(
-                    "Enter Child Tag"
-                );
-
-                return;
-            }
-
-            childTags.push(tag1);
+            expectedCount = 1;
         }
 
         else if (
             kidsType === "Double"
         ) {
 
-            const tag1 =
-                document.getElementById(
-                    "childTag1"
-                ).value;
-
-            const tag2 =
-                document.getElementById(
-                    "childTag2"
-                ).value;
-
-            if (
-                !tag1
-                ||
-                !tag2
-            ) {
-
-                alert(
-                    "Enter All Child Tags"
-                );
-
-                return;
-            }
-
-            childTags.push(tag1);
-            childTags.push(tag2);
+            expectedCount = 2;
         }
 
         else if (
             kidsType === "Triplet"
         ) {
 
-            const tag1 =
-                document.getElementById(
-                    "childTag1"
-                ).value;
+            expectedCount = 3;
+        }
 
-            const tag2 =
-                document.getElementById(
-                    "childTag2"
-                ).value;
+        /* VALIDATE */
 
-            const tag3 =
-                document.getElementById(
-                    "childTag3"
-                ).value;
+        if (
+            childTags.length !==
+            expectedCount
+        ) {
 
-            if (
-                !tag1
-                ||
-                !tag2
-                ||
-                !tag3
-            ) {
+            alert(
+                "Enter All Child Tags"
+            );
 
-                alert(
-                    "Enter All Child Tags"
-                );
-
-                return;
-            }
-
-            childTags.push(tag1);
-            childTags.push(tag2);
-            childTags.push(tag3);
+            return;
         }
 
         /* SAVE CHILD TAGS */
@@ -1609,7 +2157,39 @@ function saveBirthRecord() {
         lastRecord.childTags =
             childTags;
 
-    } else {
+        /* AUTO LINK CHILDREN */
+
+        childTags.forEach(tag => {
+
+            const childGoat =
+                goats.find(
+
+                    goat =>
+
+                    goat.tag.toLowerCase()
+                    ===
+                    tag.toLowerCase()
+                );
+
+            /* IF CHILD EXISTS */
+
+            if (childGoat) {
+
+                /* MOTHER */
+
+                childGoat.motherTag =
+                    goats[currentBirthIndex]
+                    .tag;
+
+                /* FATHER */
+
+                childGoat.fatherTag =
+                    lastRecord.fatherTag;
+            }
+        });
+    }
+
+    else {
 
         lastRecord.kidsType =
             "Not Yet";
@@ -1617,6 +2197,8 @@ function saveBirthRecord() {
         lastRecord.childTags =
             [];
     }
+
+    /* SAVE */
 
     saveData();
 
@@ -1628,7 +2210,6 @@ function saveBirthRecord() {
         "Birth Record Updated"
     );
 }
-
 
 function closeBirthModal() {
 
@@ -2520,7 +3101,6 @@ function downloadFilteredGoats() {
 }
 /*---------------------------------------------------*/
 /* CHILD TAG INPUTS */
-
 function generateChildTagInputs() {
 
     const kidsType =
@@ -2542,16 +3122,12 @@ function generateChildTagInputs() {
         count = 1;
     }
 
-    else if (
-        kidsType === "Double"
-    ) {
+    else if (kidsType === "Double") {
 
         count = 2;
     }
 
-    else if (
-        kidsType === "Triplet"
-    ) {
+    else if (kidsType === "Triplet") {
 
         count = 3;
     }
@@ -2567,6 +3143,7 @@ function generateChildTagInputs() {
             <input
                 type="text"
                 id="childTag${i}"
+                class="childTagInput"
                 placeholder="Child Tag ${i}"
             >
         `;
@@ -2574,6 +3151,32 @@ function generateChildTagInputs() {
 }
 
 
+/* CUSTOM BREED */
+
+function toggleCustomBreed() {
+
+    const breed =
+        document.getElementById(
+            "breed"
+        ).value;
+
+    const customBreedInput =
+        document.getElementById(
+            "customBreed"
+        );
+
+    if (breed === "Custom") {
+
+        customBreedInput.style.display =
+            "block";
+    }
+
+    else {
+
+        customBreedInput.style.display =
+            "none";
+    }
+}
 
 
 
@@ -2608,7 +3211,36 @@ function searchGoats() {
     renderGoats(filtered);
 }
 
+function scrollToSearch() {
 
+    /* OPEN GOAT PAGE */
+
+    showPage("goatPage");
+
+    /* SEARCH BOX */
+
+    const searchBox =
+        document.getElementById(
+            "searchBox"
+        );
+
+    /* SCROLL */
+
+    searchBox.scrollIntoView({
+
+        behavior: "smooth",
+
+        block: "center"
+    });
+
+    /* FOCUS */
+
+    setTimeout(() => {
+
+        searchBox.focus();
+
+    }, 500);
+}
 
 
 
