@@ -1028,9 +1028,8 @@ function renderGoats(filteredGoats = goats) {
                         </span>
 
                         <span class="info-value">
-
                             ${goat.status || "Active"}
-
+                            ${String(goat.status || "Active").toLowerCase() === "died" && goat.deathDate ? `<small class="death-date-label">Died on: ${goat.deathDate}</small>` : ""}
                         </span>
 
                     </div>
@@ -1342,6 +1341,12 @@ function renderGoats(filteredGoats = goats) {
                         💰 Sale
                     </button>
 
+                    ${String(goat.status || "Active").toLowerCase() === "died" ? `
+                    <button class="died-status-button" disabled>⚫ Died${goat.deathDate ? ` · ${goat.deathDate}` : ""}</button>
+                    ` : `
+                    <button class="died-status-button" onclick="openDiedModal(${originalIndex})">⚫ Mark as Died</button>
+                    `}
+
                 </div>
 
             </div>
@@ -1621,12 +1626,29 @@ function addVaccination(index) {
     ).style.display = "flex";
 }
 
+function toggleCustomVaccineName() {
+
+    const presetSelect = document.getElementById("vaccinePreset");
+    const customInput = document.getElementById("vaccineName");
+    const useCustomName = presetSelect.value === "__custom__";
+
+    customInput.style.display = useCustomName ? "block" : "none";
+    customInput.required = useCustomName;
+
+    if (!useCustomName) {
+        customInput.value = "";
+    } else {
+        customInput.focus();
+    }
+}
+
 function saveVaccination() {
 
-    const vaccineName =
-        document.getElementById(
-            "vaccineName"
-        ).value;
+    const presetSelect = document.getElementById("vaccinePreset");
+    const customInput = document.getElementById("vaccineName");
+    const vaccineName = presetSelect.value === "__custom__"
+        ? customInput.value.trim()
+        : presetSelect.value.trim();
 
     const vaccineDate =
         document.getElementById(
@@ -1635,7 +1657,7 @@ function saveVaccination() {
 
     if (!vaccineName || !vaccineDate) {
 
-        alert("Fill all fields");
+        alert("Please select a vaccine (or enter a custom name) and choose the vaccination date.");
 
         return;
     }
@@ -1677,6 +1699,14 @@ function closeVaccineModal() {
 
     document.getElementById(
         "vaccineName"
+    ).value = "";
+
+    document.getElementById(
+        "vaccineName"
+    ).style.display = "none";
+
+    document.getElementById(
+        "vaccinePreset"
     ).value = "";
 
     document.getElementById(
@@ -1771,58 +1801,54 @@ function addHealthRecord(index) {
     ).style.display = "flex";
 }
 
+function toggleCustomHealthProblem() {
+    const select = document.getElementById("healthProblem");
+    const customInput = document.getElementById("healthProblemCustom");
+    if (!select || !customInput) return;
+
+    const isCustom = select.value === "Custom";
+    customInput.style.display = isCustom ? "block" : "none";
+    customInput.required = isCustom;
+    if (!isCustom) customInput.value = "";
+}
+
+function toggleCustomHealthMedicine() {
+    const select = document.getElementById("healthMedicine");
+    const customInput = document.getElementById("healthMedicineCustom");
+    if (!select || !customInput) return;
+    const isCustom = select.value === "Custom";
+    customInput.style.display = isCustom ? "block" : "none";
+    customInput.required = isCustom;
+    if (!isCustom) customInput.value = "";
+}
+
 function saveHealthRecord() {
-
-    const problem =
-        document.getElementById(
-            "healthProblem"
-        ).value;
-
-    const medicine =
-        document.getElementById(
-            "healthMedicine"
-        ).value;
-
-    const date =
-        document.getElementById(
-            "healthDate"
-        ).value;
+    const problemChoice = document.getElementById("healthProblem").value;
+    const customProblem = document.getElementById("healthProblemCustom").value.trim();
+    const problem = problemChoice === "Custom" ? customProblem : problemChoice;
+    const medicineChoice = document.getElementById("healthMedicine").value;
+    const customMedicine = document.getElementById("healthMedicineCustom").value.trim();
+    const medicine = medicineChoice === "Custom" ? customMedicine : medicineChoice;
+    const date = document.getElementById("healthDate").value;
 
     if (!problem || !medicine || !date) {
-
-        alert(
-            "Fill all fields"
-        );
-
+        alert("Select or enter a health problem, enter medicine, and select the date.");
         return;
     }
 
-    if (
-        !goats[currentHealthIndex]
-        .healthRecords
-    ) {
-
-        goats[currentHealthIndex]
-            .healthRecords = [];
+    const goat = goats[currentHealthIndex];
+    if (!goat) {
+        alert("Could not find the selected goat. Please close and reopen the Health form.");
+        return;
     }
 
-    goats[currentHealthIndex]
-        .healthRecords.push({
-
-            problem,
-            medicine,
-            date
-        });
+    if (!Array.isArray(goat.healthRecords)) goat.healthRecords = [];
+    goat.healthRecords.push({ problem, medicine, date });
 
     saveData();
-
-    renderGoats();
-
+    renderGoats(currentFilteredGoats || goats);
     closeHealthModal();
-
-    alert(
-        "Health Record Added"
-    );
+    alert("Health Record Added");
 }
 
 function closeHealthModal() {
@@ -1831,13 +1857,13 @@ function closeHealthModal() {
         "healthModal"
     ).style.display = "none";
 
-    document.getElementById(
-        "healthProblem"
-    ).value = "";
+    document.getElementById("healthProblem").value = "";
+    document.getElementById("healthProblemCustom").value = "";
+    document.getElementById("healthProblemCustom").style.display = "none";
 
-    document.getElementById(
-        "healthMedicine"
-    ).value = "";
+    document.getElementById("healthMedicine").value = "";
+    document.getElementById("healthMedicineCustom").value = "";
+    document.getElementById("healthMedicineCustom").style.display = "none";
 
     document.getElementById(
         "healthDate"
@@ -2265,6 +2291,65 @@ function saveSaleRecord() {
         "Sale Record Added"
     );
 }
+/* GOAT DEATH STATUS */
+let currentDiedIndex = -1;
+
+function openDiedModal(index) {
+    if (!goats[index]) {
+        alert("Goat not found.");
+        return;
+    }
+    currentDiedIndex = index;
+    const dateInput = document.getElementById("goatDiedDate");
+    if (dateInput) {
+        const today = new Date();
+        const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
+            .toISOString().slice(0, 10);
+        dateInput.value = goats[index].deathDate || localDate;
+        dateInput.max = localDate;
+    }
+    document.getElementById("diedModal").style.display = "flex";
+}
+
+function closeDiedModal() {
+    const modal = document.getElementById("diedModal");
+    if (modal) modal.style.display = "none";
+    const dateInput = document.getElementById("goatDiedDate");
+    if (dateInput) dateInput.value = "";
+    currentDiedIndex = -1;
+}
+
+function saveGoatDiedStatus() {
+    const goat = goats[currentDiedIndex];
+    const deathDate = document.getElementById("goatDiedDate").value;
+    if (!goat) {
+        alert("Could not find the selected goat.");
+        closeDiedModal();
+        return;
+    }
+    if (!deathDate) {
+        alert("Please select the date of death.");
+        return;
+    }
+    const today = new Date();
+    const chosen = new Date(deathDate + "T00:00:00");
+    today.setHours(0, 0, 0, 0);
+    if (chosen > today) {
+        alert("Date of death cannot be in the future.");
+        return;
+    }
+    if (!confirm(`Mark goat ${goat.tag} as Died on ${deathDate}? Existing records will be preserved.`)) {
+        return;
+    }
+
+    goat.status = "Died";
+    goat.deathDate = deathDate;
+    saveData();
+    closeDiedModal();
+    renderGoats(currentFilteredGoats || goats);
+    alert(`Goat ${goat.tag} status updated to Died.`);
+}
+
 /* DOWNLOAD FUNCTIONS */
 
 
@@ -3703,3 +3788,23 @@ if ("serviceWorker" in navigator) {
             );
         });
 }
+
+/* INTERACTIVE GOAT PROFILE: collapsible record sections.
+   Uses event delegation so it continues to work after renderGoats() redraws cards. */
+document.addEventListener("click", function (event) {
+    const heading = event.target.closest("#goatProfileContent .record-section h3");
+    if (!heading) return;
+    const section = heading.closest(".record-section");
+    if (!section) return;
+    const collapsed = section.classList.toggle("is-collapsed");
+    heading.setAttribute("aria-expanded", String(!collapsed));
+});
+
+/* Make record headings keyboard accessible without changing existing handlers. */
+document.addEventListener("keydown", function (event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const heading = event.target.closest && event.target.closest("#goatProfileContent .record-section h3");
+    if (!heading) return;
+    event.preventDefault();
+    heading.click();
+});
