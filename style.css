@@ -1574,3 +1574,834 @@ input[type="date"] {
 .dark-mode .birth-field-label { color: #dbeafe; }
 .dark-mode .birth-kid-card input, .dark-mode .birth-kid-card select { background: #0f172a; color: #f8fafc; border-color: #475569; }
 .dark-mode .birth-kid-card input[readonly] { background: #14532d; color: #dcfce7; }
+
+/* BIRTH MODAL SCROLL FIX
+   Keeps long birth forms usable on small screens without changing JS. */
+#birthModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    padding: 16px 0;
+    box-sizing: border-box;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+#birthModal .modal-content {
+    box-sizing: border-box;
+    width: min(92%, 460px);
+    max-width: 460px;
+    max-height: calc(100dvh - 32px);
+    margin: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    flex-shrink: 0;
+    padding: 20px;
+}
+
+#birthModal .modal-content h2 {
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+#birthModal #birthKidsFields,
+#birthModal #childTagsContainer {
+    min-width: 0;
+    width: 100%;
+}
+
+#birthModal input,
+#birthModal select,
+#birthModal button {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+#birthModal .modal-content > button {
+    flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+    #birthModal {
+        padding: 8px 0;
+    }
+
+    #birthModal .modal-content {
+        width: calc(100% - 24px);
+        max-height: calc(100dvh - 16px);
+        padding: 16px;
+        gap: 10px;
+    }
+}
+
+
+/* ================================
+   INTERACTIVE GOAT PROFILE POLISH
+   ================================ */
+#goatProfilePage {
+    animation: profilePageIn .28s ease-out both;
+}
+@keyframes profilePageIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.profile-page-header {
+    position: relative;
+    padding: 18px 18px 8px;
+}
+.profile-page-header h2 {
+    letter-spacing: -.35px;
+    line-height: 1.25;
+}
+#goatProfileContent .goat-card {
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, .18);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+#goatProfileContent .goat-card:hover {
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .11);
+}
+#goatProfileContent .info-box,
+#goatProfileContent .goat-info-box {
+    border-radius: 15px;
+    transition: background .2s ease, transform .2s ease;
+}
+#goatProfileContent .record-section {
+    margin: 14px 0 0;
+    padding: 12px 13px;
+    border: 1px solid #e8eef5;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, .035);
+}
+#goatProfileContent .record-section h3 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0;
+    padding: 2px 0;
+    cursor: pointer;
+    user-select: none;
+    outline-offset: 4px;
+}
+#goatProfileContent .record-section h3::after {
+    content: "⌄";
+    flex: 0 0 auto;
+    color: #16a34a;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1;
+    transition: transform .2s ease;
+}
+#goatProfileContent .record-section.is-collapsed h3::after {
+    transform: rotate(-90deg);
+}
+#goatProfileContent .record-section > :not(h3) {
+    animation: recordExpand .2s ease-out;
+}
+#goatProfileContent .record-section.is-collapsed > :not(h3) {
+    display: none !important;
+}
+@keyframes recordExpand {
+    from { opacity: 0; transform: translateY(-3px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+#goatProfileContent .record-card {
+    border: 1px solid #e6edf5;
+    border-left: 4px solid #16a34a;
+    border-radius: 13px;
+    background: linear-gradient(135deg, #f8fafc, #f2fbf5);
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+#goatProfileContent .record-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, .06);
+}
+#goatProfileContent .action-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding-top: 18px;
+}
+#goatProfileContent .action-buttons button {
+    min-height: 46px;
+    margin: 0;
+    border-radius: 13px;
+    box-shadow: 0 5px 12px rgba(22, 163, 74, .12);
+    transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+}
+#goatProfileContent .action-buttons button:hover {
+    transform: translateY(-2px);
+    filter: saturate(1.08);
+    box-shadow: 0 8px 17px rgba(22, 163, 74, .2);
+}
+#goatProfileContent .action-buttons button:active {
+    transform: scale(.98);
+}
+#goatProfileContent .back-button:hover {
+    background: #d7f5e2;
+}
+@media (max-width: 480px) {
+    .profile-page-header { padding: 14px 14px 6px; }
+    .profile-page-header h2 { font-size: 21px; }
+    #goatProfileContent .goat-card { margin: 10px 8px 20px; }
+    #goatProfileContent .record-section { padding: 11px; border-radius: 14px; }
+    #goatProfileContent .action-buttons { gap: 8px; }
+    #goatProfileContent .action-buttons button { min-height: 44px; font-size: 13px; }
+}
+
+
+/* VACCINATION PRESET SELECT */
+#vaccineModal .vaccine-field-label {
+    display: block;
+    margin: 2px 0 -6px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+}
+#vaccineModal #vaccinePreset,
+#vaccineModal #vaccineName,
+#vaccineModal #vaccineDate {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+    font: inherit;
+    background: #fff;
+}
+#vaccineModal #vaccinePreset:focus,
+#vaccineModal #vaccineName:focus,
+#vaccineModal #vaccineDate:focus {
+    outline: 2px solid rgba(22, 163, 74, .22);
+    border-color: #16a34a;
+}
+
+
+/* Health presets and death-status controls */
+#healthModal .modal-content label,
+#diedModal .modal-content label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #24405b;
+}
+#healthModal .modal-content select {
+    width: 100%;
+    box-sizing: border-box;
+    background: #fff;
+    font: inherit;
+}
+#healthProblemCustom {
+    width: 100%;
+    box-sizing: border-box;
+}
+.died-status-button {
+    background: linear-gradient(135deg, #64748b, #334155) !important;
+}
+.died-status-button:disabled {
+    opacity: .8;
+    cursor: not-allowed;
+}
+.death-date-label {
+    display: block;
+    margin-top: 4px;
+    color: #b91c1c;
+    font-size: 12px;
+    font-weight: 600;
+}
+.died-modal-note {
+    margin: 0 0 4px;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.5;
+}
+#diedModal .died-cancel-button {
+    background: #64748b;
+}
+#diedModal .modal-content {
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+}
+
+#healthMedicineCustom { width: 100%; box-sizing: border-box; }
+
+/* ==========================================================
+   SP GOAT FARM — MODERN FIELD JOURNAL THEME
+   Visual-only overrides. Existing HTML IDs and JS behavior
+   are intentionally preserved.
+   ========================================================== */
+:root {
+  --farm-ink: #20332b;
+  --farm-muted: #718078;
+  --farm-green: #176b4d;
+  --farm-green-2: #25966b;
+  --farm-lime: #c6e6a5;
+  --farm-cream: #f7f5ee;
+  --farm-paper: #fffefa;
+  --farm-line: #e2e8dc;
+  --farm-orange: #c77b43;
+  --farm-danger: #b94343;
+  --farm-shadow: 0 16px 38px rgba(36, 61, 47, .09);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  color: var(--farm-ink);
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(198,230,165,.30), transparent 34%),
+    radial-gradient(ellipse at 100% 15%, rgba(199,123,67,.09), transparent 28%),
+    var(--farm-cream);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: -.01em;
+}
+.container {
+  background: rgba(255,254,250,.88);
+  box-shadow: 0 0 60px rgba(43, 68, 51, .055);
+  border-inline: 1px solid rgba(226,232,220,.65);
+}
+
+/* Typography and headings */
+.container h1, .container h2, .container h3 {
+  color: var(--farm-ink);
+  letter-spacing: -.035em;
+}
+.profile-page-header { padding: 20px 18px 8px; }
+.profile-page-header h2 {
+  font-size: clamp(20px, 4.4vw, 26px);
+  font-weight: 850;
+  margin-top: 18px;
+}
+.profile-page-header p { color: var(--farm-muted); }
+.back-button {
+  background: #eaf3e4;
+  color: var(--farm-green);
+  border: 1px solid #d9e8d0;
+  border-radius: 999px;
+  font-weight: 750;
+  transition: transform .18s ease, background .18s ease;
+}
+.back-button:hover { background: #dcebd2 !important; transform: translateX(-2px); }
+
+/* Goat profile becomes a premium paper card */
+#goatProfileContent .goat-card {
+  position: relative;
+  margin: 12px 14px 26px;
+  padding: 18px;
+  border-radius: 25px;
+  border: 1px solid rgba(220,229,215,.95);
+  background: linear-gradient(155deg, #fffefa 0%, #ffffff 55%, #f7fbf3 100%);
+  box-shadow: var(--farm-shadow);
+  overflow: hidden;
+}
+#goatProfileContent .goat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: linear-gradient(90deg, var(--farm-green), #8abf68, #e4b477);
+}
+#goatProfileContent .goat-header { gap: 12px; align-items: flex-start; }
+#goatProfileContent .goat-tag { color: var(--farm-ink); font-size: clamp(22px, 5vw, 29px); font-weight: 850; }
+#goatProfileContent .goat-badge {
+  background: #e0f3dc;
+  color: #236440;
+  border: 1px solid #cce8c5;
+  padding: 5px 11px;
+  letter-spacing: .015em;
+}
+#goatProfileContent .goat-age {
+  background: #f1f5e9;
+  border: 1px solid #e2e9d7;
+  color: #46633d;
+  border-radius: 999px;
+  padding: 9px 12px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+#goatProfileContent .goat-info-grid { gap: 10px; margin-top: 16px; margin-bottom: 16px; }
+#goatProfileContent .info-box,
+#goatProfileContent .goat-info-box {
+  background: #f4f6ef;
+  border: 1px solid #e8ece1;
+  border-radius: 17px;
+  padding: 13px;
+  min-width: 0;
+}
+#goatProfileContent .info-label { color: #78877a; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+#goatProfileContent .info-value { color: var(--farm-ink); font-size: 14px; overflow-wrap: anywhere; }
+
+/* Records are distinct interactive panels */
+#goatProfileContent .record-section {
+  background: rgba(255,255,252,.94);
+  border: 1px solid var(--farm-line);
+  border-radius: 17px;
+  padding: 13px;
+  margin-top: 12px;
+  box-shadow: 0 5px 15px rgba(39,63,43,.035);
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+#goatProfileContent .record-section:hover {
+  border-color: #cbdcc3;
+  box-shadow: 0 8px 20px rgba(39,63,43,.065);
+}
+#goatProfileContent .record-section h3 {
+  color: #294437;
+  font-size: 15px;
+  font-weight: 800;
+  min-height: 25px;
+}
+#goatProfileContent .record-section h3::after { color: var(--farm-green-2); }
+#goatProfileContent .record-card {
+  background: linear-gradient(120deg, #f6f8f1, #fffefa);
+  border: 1px solid #e6ebdf;
+  border-left: 4px solid #6aa36a;
+  border-radius: 13px;
+  color: #34483b;
+  padding: 12px;
+  line-height: 1.5;
+}
+#goatProfileContent .record-card:hover { border-color: #cbdcc3; }
+#goatProfileContent .action-buttons { gap: 9px; padding-top: 17px; }
+#goatProfileContent .action-buttons button,
+button:not(.bottom-nav button):not(.back-button):not(.dark-mode-btn) {
+  background: linear-gradient(135deg, #237a55, #176747);
+  color: #fffefa;
+  border: 1px solid rgba(19,93,63,.14);
+  border-radius: 14px;
+  font-weight: 750;
+  box-shadow: 0 7px 15px rgba(23,107,77,.13);
+  transition: transform .17s ease, box-shadow .17s ease, filter .17s ease;
+}
+button:not(.bottom-nav button):not(.back-button):not(.dark-mode-btn):hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 19px rgba(23,107,77,.19);
+}
+button:not(.bottom-nav button):not(.back-button):not(.dark-mode-btn):active { transform: scale(.985); }
+#goatProfileContent .action-buttons button { min-height: 45px; padding: 10px 9px; }
+
+/* Search and goat list */
+#searchBox, input, select, textarea {
+  border-color: #dce4d7;
+  border-radius: 14px;
+  background: #fffefa;
+  color: var(--farm-ink);
+  box-shadow: inset 0 1px 2px rgba(32,51,43,.025);
+}
+input:focus, select:focus, textarea:focus {
+  outline: 3px solid rgba(96,157,91,.17);
+  border-color: #77a66e;
+}
+.goat-card:not(#goatProfileContent .goat-card) {
+  border: 1px solid #e3e9dd;
+  border-radius: 21px;
+  background: linear-gradient(145deg, #fffefa, #f8faf4);
+  box-shadow: 0 9px 23px rgba(36,61,47,.06);
+}
+.form-box, .expense-card, .income-card {
+  border: 1px solid #e3e9dd;
+  border-radius: 22px;
+  box-shadow: 0 9px 23px rgba(36,61,47,.055);
+}
+
+/* Navigation: floating botanical toolbar */
+.bottom-nav {
+  background: rgba(255,254,250,.94);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(219,228,213,.9);
+  box-shadow: 0 -8px 28px rgba(36,61,47,.07);
+  padding: 9px 4px calc(9px + env(safe-area-inset-bottom));
+}
+.bottom-nav button {
+  border-radius: 13px;
+  color: #738075;
+  font-weight: 700;
+  transition: color .2s ease, background .2s ease, transform .2s ease;
+}
+.bottom-nav button:hover { color: var(--farm-green); background: #edf4e8; transform: translateY(-2px); }
+.bottom-nav button i { font-size: 20px; }
+.fab {
+  background: linear-gradient(145deg, #2a9a68, #176b4d);
+  border: 3px solid rgba(255,254,250,.92);
+  box-shadow: 0 12px 26px rgba(23,107,77,.28);
+}
+
+/* Modals */
+.modal { background: rgba(20,35,27,.57); backdrop-filter: blur(5px); padding: 14px; }
+.modal-content, .qr-modal-content {
+  background: #fffefa;
+  border: 1px solid #e4e9df;
+  border-radius: 23px;
+  box-shadow: 0 24px 70px rgba(15,30,21,.24);
+}
+.modal-content h2, .qr-modal-content h2 { color: var(--farm-ink); font-weight: 850; }
+
+/* Death status remains clearly distinct */
+#goatProfileContent .goat-card:has(.died-status-button) .goat-badge { border-color: #f0caca; }
+.died-status-button { background: linear-gradient(135deg, #bd4b4b, #943333) !important; box-shadow: 0 7px 16px rgba(185,67,67,.16) !important; }
+
+/* Dark mode receives a complete matching palette */
+body.dark-mode {
+  --farm-ink: #edf4e9;
+  --farm-muted: #a6b7a9;
+  --farm-line: #34463a;
+  background: radial-gradient(ellipse at 8% 0%, rgba(51,100,65,.18), transparent 35%), #111b16;
+  color: #edf4e9;
+}
+.dark-mode .container { background: rgba(21,32,25,.94); border-color: #2b3d30; }
+.dark-mode #goatProfileContent .goat-card,
+.dark-mode .goat-card:not(#goatProfileContent .goat-card),
+.dark-mode .form-box,
+.dark-mode .expense-card,
+.dark-mode .income-card,
+.dark-mode .modal-content,
+.dark-mode .qr-modal-content {
+  background: linear-gradient(150deg, #1d2b21, #17231b);
+  border-color: #34463a;
+  color: #edf4e9;
+}
+.dark-mode #goatProfileContent .info-box,
+.dark-mode #goatProfileContent .goat-info-box { background: #26372a; border-color: #354839; }
+.dark-mode #goatProfileContent .info-value,
+.dark-mode #goatProfileContent .record-section h3,
+.dark-mode .container h1,
+.dark-mode .container h2,
+.dark-mode .container h3 { color: #edf4e9; }
+.dark-mode #goatProfileContent .record-section { background: #1b291f; border-color: #34463a; }
+.dark-mode #goatProfileContent .record-card { background: #25362a; border-color: #3a4b3d; color: #e6efe3; }
+.dark-mode .bottom-nav { background: rgba(22,34,26,.95); border-color: #34463a; }
+.dark-mode .bottom-nav button { color: #c0d0c0; }
+.dark-mode input, .dark-mode select, .dark-mode textarea { background: #1d2b21; border-color: #405442; color: #edf4e9; }
+.dark-mode .back-button { background: #263b2b; border-color: #3a563c; color: #c9e7bb; }
+
+@media (max-width: 480px) {
+  .container { border: 0; }
+  #goatProfileContent .goat-card { margin: 10px 9px 22px; padding: 15px; border-radius: 22px; }
+  #goatProfileContent .goat-header { flex-wrap: wrap; }
+  #goatProfileContent .goat-age { font-size: 11px; padding: 8px 10px; }
+  #goatProfileContent .info-box, #goatProfileContent .goat-info-box { padding: 11px; }
+  #goatProfileContent .record-section { padding: 12px; }
+  #goatProfileContent .action-buttons button { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ==========================================================
+   READABILITY FIX — high contrast goat list cards
+   Keeps existing IDs, classes, data, and JavaScript unchanged.
+   ========================================================== */
+:root {
+  --farm-ink: #17251f;
+  --farm-muted: #52645a;
+}
+
+/* Goat list: use a light card instead of dark green surfaces */
+.goat-summary-card {
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) auto 12px !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: calc(100% - 8px) !important;
+  min-height: 88px !important;
+  margin: 9px 4px !important;
+  padding: 13px 14px !important;
+  border: 1px solid #d6e2d8 !important;
+  border-radius: 17px !important;
+  background: #ffffff !important;
+  color: #17251f !important;
+  text-align: left !important;
+  box-shadow: 0 4px 12px rgba(20, 48, 32, .07) !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  opacity: 1 !important;
+}
+.goat-summary-card:hover,
+.goat-summary-card:focus-visible {
+  background: #f4faf5 !important;
+  border-color: #78aa8b !important;
+  transform: translateY(-1px);
+  outline: 3px solid rgba(37, 150, 107, .18) !important;
+  outline-offset: 1px;
+}
+.goat-summary-avatar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+  background: #e8f5ec !important;
+  color: #173f2d !important;
+  font-size: 25px !important;
+  flex-shrink: 0 !important;
+}
+.goat-summary-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 14px !important;
+}
+.goat-summary-main {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  color: #17251f !important;
+  opacity: 1 !important;
+}
+.goat-summary-main strong {
+  color: #17251f !important;
+  font-size: 16px !important;
+  line-height: 1.3 !important;
+  font-weight: 800 !important;
+  overflow-wrap: anywhere !important;
+}
+.goat-summary-main span {
+  color: #354d40 !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  font-weight: 600 !important;
+}
+.goat-summary-main small {
+  color: #52645a !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  font-weight: 500 !important;
+}
+.goat-summary-age {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  max-width: 118px !important;
+  padding: 8px 10px !important;
+  border: 1px solid #dce8df !important;
+  border-radius: 12px !important;
+  background: #f0f7f1 !important;
+  color: #254a35 !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  line-height: 1.35 !important;
+  text-align: center !important;
+  white-space: normal !important;
+  opacity: 1 !important;
+}
+.goat-summary-chevron {
+  color: #26784f !important;
+  font-size: 14px !important;
+  opacity: 1 !important;
+}
+
+/* Make the search/download controls readable and consistent */
+#searchBox {
+  min-height: 48px !important;
+  font-size: 16px !important;
+  color: #17251f !important;
+  background: #ffffff !important;
+}
+button[onclick*="download"],
+button[onclick*="Download"],
+button[onclick*="export"] {
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+}
+
+/* Improve the rest of the app's small text without changing layout logic */
+.profile-page-header p,
+#goatProfileContent .info-label,
+#goatProfileContent .goat-info-label {
+  color: #52645a !important;
+}
+#goatProfileContent .info-value,
+#goatProfileContent .record-card {
+  color: #17251f !important;
+}
+
+/* Dark mode remains readable if enabled */
+.dark-mode .goat-summary-card {
+  background: #202d25 !important;
+  border-color: #45594b !important;
+  color: #f3f7f3 !important;
+}
+.dark-mode .goat-summary-main,
+.dark-mode .goat-summary-main strong {
+  color: #f3f7f3 !important;
+}
+.dark-mode .goat-summary-main span,
+.dark-mode .goat-summary-main small {
+  color: #d0ddd3 !important;
+}
+.dark-mode .goat-summary-age {
+  background: #2b3d30 !important;
+  border-color: #45594b !important;
+  color: #f0f7f1 !important;
+}
+.dark-mode .goat-summary-avatar { background: #314638 !important; }
+
+@media (max-width: 380px) {
+  .goat-summary-card {
+    grid-template-columns: 42px minmax(0, 1fr) 10px !important;
+    gap: 9px !important;
+    padding: 11px !important;
+  }
+  .goat-summary-avatar { width: 42px !important; height: 42px !important; }
+  .goat-summary-age { grid-column: 2; justify-self: start; max-width: none !important; padding: 4px 8px !important; }
+  .goat-summary-chevron { grid-column: 3; grid-row: 1; }
+  .goat-summary-main strong { font-size: 15px !important; }
+  .goat-summary-main span { font-size: 13px !important; }
+  .goat-summary-main small { font-size: 12px !important; }
+}
+
+/* ==========================================================
+   DUAL-THEME CONTRAST PATCH — light + dark mode
+   Fixes low-contrast profile labels and record text in dark mode.
+   Append-only visual overrides; no JavaScript or data changes.
+   ========================================================== */
+:root {
+  color-scheme: light;
+  --farm-ink: #17251f;
+  --farm-muted: #52645a;
+}
+body:not(.dark-mode) #goatProfileContent,
+body:not(.dark-mode) #goatProfileContent .goat-card {
+  color: #17251f !important;
+}
+body:not(.dark-mode) #goatProfileContent .info-label,
+body:not(.dark-mode) #goatProfileContent .goat-info-label,
+body:not(.dark-mode) #goatProfileContent .profile-label,
+body:not(.dark-mode) #goatProfileContent label {
+  color: #52645a !important;
+}
+body:not(.dark-mode) #goatProfileContent .info-value,
+body:not(.dark-mode) #goatProfileContent .record-card,
+body:not(.dark-mode) #goatProfileContent .record-card * {
+  color: #17251f;
+}
+
+body.dark-mode {
+  color-scheme: dark;
+  --farm-ink: #f3f7f3;
+  --farm-muted: #c0d0c5;
+  --farm-line: #405447;
+}
+body.dark-mode,
+body.dark-mode .container,
+body.dark-mode #goatProfileContent {
+  color: #edf5ee !important;
+}
+body.dark-mode .profile-page-header h2,
+body.dark-mode .container h1,
+body.dark-mode .container h2,
+body.dark-mode .container h3,
+body.dark-mode #goatProfileContent .goat-tag,
+body.dark-mode #goatProfileContent .info-value,
+body.dark-mode #goatProfileContent .record-section h3,
+body.dark-mode #goatProfileContent .record-card strong,
+body.dark-mode #goatProfileContent .record-card b {
+  color: #f4f8f4 !important;
+}
+body.dark-mode .profile-page-header p,
+body.dark-mode #goatProfileContent .info-label,
+body.dark-mode #goatProfileContent .goat-info-label,
+body.dark-mode #goatProfileContent .profile-label,
+body.dark-mode #goatProfileContent label,
+body.dark-mode #goatProfileContent small,
+body.dark-mode #goatProfileContent .record-section p {
+  color: #c2d1c6 !important;
+}
+body.dark-mode #goatProfileContent .goat-card {
+  background: linear-gradient(155deg, #1b2b21 0%, #17231b 100%) !important;
+  border-color: #3b5041 !important;
+  color: #edf5ee !important;
+}
+body.dark-mode #goatProfileContent .info-box,
+body.dark-mode #goatProfileContent .goat-info-box {
+  background: #26392c !important;
+  border-color: #405747 !important;
+}
+body.dark-mode #goatProfileContent .record-section {
+  background: #1b2a20 !important;
+  border-color: #3b5041 !important;
+  color: #edf5ee !important;
+}
+body.dark-mode #goatProfileContent .record-card {
+  background: #293b2e !important;
+  border-color: #405747 !important;
+  border-left-color: #75bd8b !important;
+  color: #edf5ee !important;
+}
+body.dark-mode #goatProfileContent .record-card * {
+  color: #edf5ee !important;
+}
+body.dark-mode #goatProfileContent .goat-badge {
+  background: #254a34 !important;
+  border-color: #477b59 !important;
+  color: #d9f8df !important;
+}
+body.dark-mode #goatProfileContent .goat-age {
+  background: #304633 !important;
+  border-color: #4c684e !important;
+  color: #f0f8e9 !important;
+}
+body.dark-mode .back-button {
+  background: #2a4130 !important;
+  border-color: #48644c !important;
+  color: #e0f2d8 !important;
+}
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea,
+body.dark-mode #searchBox {
+  background: #1e2e23 !important;
+  border-color: #4a6150 !important;
+  color: #f2f7f2 !important;
+}
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder,
+body.dark-mode #searchBox::placeholder {
+  color: #bdcdbf !important;
+  opacity: 1;
+}
+body.dark-mode .modal-content,
+body.dark-mode .qr-modal-content,
+body.dark-mode .modal-content h2,
+body.dark-mode .qr-modal-content h2 {
+  color: #f2f7f2 !important;
+}
+body.dark-mode .modal-content label,
+body.dark-mode .modal-content p,
+body.dark-mode .qr-modal-content label,
+body.dark-mode .qr-modal-content p {
+  color: #d2dfd5 !important;
+}
+body.dark-mode .bottom-nav button { color: #d0ded3 !important; }
+body.dark-mode .goat-summary-card {
+  background: #202f25 !important;
+  border-color: #465d4c !important;
+}
+body.dark-mode .goat-summary-main,
+body.dark-mode .goat-summary-main strong { color: #f3f7f3 !important; }
+body.dark-mode .goat-summary-main span,
+body.dark-mode .goat-summary-main small { color: #d0dfd4 !important; }
+body.dark-mode .goat-summary-age {
+  background: #304633 !important;
+  border-color: #4b654e !important;
+  color: #f0f8e9 !important;
+}
+body.dark-mode .goat-summary-chevron { color: #8ed7a0 !important; }
+
+/* Preserve clear text when the operating system prefers dark mode,
+   without overriding the app's explicit day/night toggle. */
+@media (prefers-color-scheme: dark) {
+  body:not(.dark-mode) { color-scheme: light; }
+}
+/* Goat Profile Header — centered, without extra text */
