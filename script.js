@@ -3,6 +3,7 @@ const APP_PIN = "1234";
 let goats =
     JSON.parse(localStorage.getItem("goats")) || [];
 let currentFilteredGoats = goats;
+let activeGoatTag = null;
 let expenses =
     JSON.parse(localStorage.getItem("expenses")) || [];
 
@@ -12,6 +13,309 @@ let incomes =
 let editIndex = -1;
 
 let farmChart = null;
+
+
+/* =========================================================
+   QR-BASED GOAT ENTRY
+   QR payload format: SPGOAT|Breed|Gender
+   ========================================================= */
+
+let activeQrGoatDetails = null;
+let html5QrScanner = null;
+let qrScannerRunning = false;
+
+const GOAT_QR_OPTIONS = [
+    { breed: "Barbari", gender: "Male", payload: "SPGOAT|Barbari|Male" },
+    { breed: "Barbari", gender: "Female", payload: "SPGOAT|Barbari|Female" },
+    { breed: "Desi", gender: "Male", payload: "SPGOAT|Desi|Male" },
+    { breed: "Desi", gender: "Female", payload: "SPGOAT|Desi|Female" },
+    { breed: "Hybrid", gender: "Male", payload: "SPGOAT|Hybrid|Male" },
+    { breed: "Hybrid", gender: "Female", payload: "SPGOAT|Hybrid|Female" }
+];
+
+/*
+ * Next tag rule:
+ * - Considers only exact top-level tags SP<number>, e.g. SP03, SP-03 is NOT included.
+ * - Ignores all tags containing a hyphen, such as SP07-01-03.
+ * - Also ignores slash-based lineage tags such as SP07/01.
+ * - Looks across existing goat records and returns max + 1.
+ */
+function getNextGoatTag() {
+    let maxNumber = 0;
+
+    (Array.isArray(goats) ? goats : []).forEach(goat => {
+        const tag = String(goat && goat.tag != null ? goat.tag : "").trim().toUpperCase();
+
+        if (!tag || tag.includes("-") || tag.includes("/")) return;
+
+        const match = tag.match(/^SP0*(\d+)$/);
+        if (match) {
+            const number = Number(match[1]);
+            if (Number.isSafeInteger(number) && number > maxNumber) {
+                maxNumber = number;
+            }
+        }
+    });
+
+    return "SP" + String(maxNumber + 1).padStart(2, "0");
+}
+
+function openManualEntry() {
+    const form = document.getElementById("manualGoatForm");
+    if (form) {
+        form.style.display = "block";
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    const tagInput = document.getElementById("tag");
+    if (tagInput && !tagInput.value.trim()) tagInput.value = getNextGoatTag();
+}
+
+function openQrEntry() {
+    const modal = document.getElementById("qrEntryModal");
+    if (modal) modal.style.display = "flex";
+
+    const message = document.getElementById("qrEntryMessage");
+    if (message) message.textContent = "Allow camera access to scan a farm QR code.";
+
+    const dob = document.getElementById("qrDob");
+    if (dob) dob.value = "";
+
+    const image = document.getElementById("qrGoatImage");
+    if (image) image.value = "";
+
+    activeQrGoatDetails = null;
+    const details = document.getElementById("qrDetectedDetails");
+    if (details) details.style.display = "none";
+}
+
+async function closeQrEntry() {
+    await stopQrScanner();
+    const modal = document.getElementById("qrEntryModal");
+    if (modal) modal.style.display = "none";
+}
+
+async function startQrScanner() {
+    const message = document.getElementById("qrEntryMessage");
+    if (!window.Html5Qrcode) {
+        if (message) message.textContent = "QR scanner library did not load. Check your internet connection, or use the QR text field below.";
+        return;
+    }
+
+    if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+        if (message) message.textContent = "Camera scanning requires HTTPS (or localhost). Open the app through GitHub Pages/HTTPS or use the QR text field.";
+        return;
+    }
+
+    try {
+        if (!html5QrScanner) html5QrScanner = new Html5Qrcode("qrReader");
+
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras || !cameras.length) {
+            if (message) message.textContent = "No camera found. Use the QR text field below.";
+            return;
+        }
+
+        const backCamera = cameras.find(camera => /back|rear|environment/i.test(camera.label || ""));
+        const cameraId = backCamera ? backCamera.id : cameras[0].id;
+
+        await html5QrScanner.start(
+            cameraId,
+            { fps: 10, qrbox: { width: 230, height: 230 }, aspectRatio: 1.0 },
+            decodedText => {
+                processQrPayload(decodedText);
+                stopQrScanner();
+            },
+            () => {}
+        );
+
+        qrScannerRunning = true;
+        if (message) message.textContent = "Camera active. Point it at one of the six SP Goat Farm QR codes.";
+    } catch (error) {
+        if (message) message.textContent = "Could not start camera. Check browser camera permission and use HTTPS. " + (error && error.message ? error.message : "");
+    }
+}
+
+async function stopQrScanner() {
+    if (html5QrScanner && qrScannerRunning) {
+        try {
+            await html5QrScanner.stop();
+            await html5QrScanner.clear();
+        } catch (error) {
+            // Scanner may already be stopped; do not interrupt the app.
+        }
+    }
+    qrScannerRunning = false;
+}
+
+function processQrPayloadFromInput() {
+    const input = document.getElementById("qrPayloadInput");
+    processQrPayload(input ? input.value : "");
+}
+
+function processQrPayload(rawPayload) {
+    const message = document.getElementById("qrEntryMessage");
+    const raw = String(rawPayload || "").trim();
+
+    let breed = "";
+    let gender = "";
+
+    // Support the QR payload generated by this app.
+    const parts = raw.split("|").map(part => part.trim());
+    if (parts.length === 3 && parts[0].toUpperCase() === "SPGOAT") {
+        breed = parts[1];
+        gender = parts[2];
+    } else {
+        // Also accept JSON QR payloads if QR codes are customized later.
+        try {
+            const parsed = JSON.parse(raw);
+            if (String(parsed.type || "").toUpperCase() === "SPGOAT") {
+                breed = String(parsed.breed || "").trim();
+                gender = String(parsed.gender || "").trim();
+            }
+        } catch (error) {}
+    }
+
+    const allowed = GOAT_QR_OPTIONS.some(option =>
+        option.breed.toLowerCase() === breed.toLowerCase() &&
+        option.gender.toLowerCase() === gender.toLowerCase()
+    );
+
+    if (!allowed) {
+        if (message) message.textContent = "This QR code is not recognized. Scan one of the six SP Goat Farm breed/gender codes.";
+        return;
+    }
+
+    const match = GOAT_QR_OPTIONS.find(option =>
+        option.breed.toLowerCase() === breed.toLowerCase() &&
+        option.gender.toLowerCase() === gender.toLowerCase()
+    );
+
+    activeQrGoatDetails = { breed: match.breed, gender: match.gender, payload: match.payload };
+    document.getElementById("qrNextTag").textContent = getNextGoatTag();
+    document.getElementById("qrDetectedBreed").textContent = match.breed;
+    document.getElementById("qrDetectedGender").textContent = match.gender;
+    document.getElementById("qrDetectedDetails").style.display = "block";
+    if (message) message.textContent = "QR recognized. Confirm the birth date, then save the entry.";
+}
+
+function saveQrGoat() {
+    if (!activeQrGoatDetails) {
+        alert("Scan a valid breed and gender QR code first.");
+        return;
+    }
+
+    const dob = document.getElementById("qrDob").value;
+    if (!dob) {
+        alert("Please select the goat's birth date.");
+        document.getElementById("qrDob").focus();
+        return;
+    }
+
+    const tag = getNextGoatTag();
+    const breed = activeQrGoatDetails.breed;
+    const gender = activeQrGoatDetails.gender;
+    const imageInput = document.getElementById("qrGoatImage");
+    const file = imageInput && imageInput.files ? imageInput.files[0] : null;
+
+    // Guard against accidental duplicate tag if records changed during the modal.
+    if (goats.some(goat => String(goat.tag || "").toLowerCase() === tag.toLowerCase())) {
+        alert("The next tag has changed because another entry was added. Please try saving again.");
+        document.getElementById("qrNextTag").textContent = getNextGoatTag();
+        return;
+    }
+
+    const finishSave = imageData => {
+        const goat = {
+            tag,
+            breed,
+            gender,
+            dob,
+            image: imageData || "",
+            status: "Active",
+            motherTag: "",
+            fatherTag: "",
+            vaccinations: [],
+            weights: [],
+            healthRecords: [],
+            breedingRecords: [],
+            saleRecords: []
+        };
+
+        goats.push(goat);
+        currentFilteredGoats = goats;
+        saveData();
+        renderGoats(currentFilteredGoats);
+        closeQrEntry();
+
+        // Reset manual entry fields so QR-created entries don't leave stale data.
+        if (typeof clearForm === "function") clearForm();
+
+        alert("Goat added successfully!\nTag: " + tag + "\nBreed: " + breed + "\nGender: " + gender);
+        showPage("goatPage");
+    };
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = event => finishSave(event.target.result);
+        reader.onerror = () => alert("Could not read the selected image. Please try again.");
+        reader.readAsDataURL(file);
+    } else {
+        finishSave("");
+    }
+}
+
+function openQrLibrary() {
+    const modal = document.getElementById("qrLibraryModal");
+    const grid = document.getElementById("qrCodeGrid");
+    if (!modal || !grid) return;
+
+    grid.innerHTML = "";
+    modal.style.display = "flex";
+
+    if (typeof QRCode === "undefined") {
+        grid.innerHTML = '<p>QR generation library did not load. Please check your internet connection.</p>';
+        return;
+    }
+
+    GOAT_QR_OPTIONS.forEach(option => {
+        const card = document.createElement("div");
+        card.className = "qr-code-card";
+
+        const title = document.createElement("h3");
+        title.textContent = option.breed;
+
+        const gender = document.createElement("p");
+        gender.className = "qr-code-gender";
+        gender.textContent = option.gender;
+
+        const qrBox = document.createElement("div");
+        qrBox.className = "qr-code-image";
+
+        const payload = document.createElement("code");
+        payload.textContent = option.payload;
+
+        card.appendChild(title);
+        card.appendChild(gender);
+        card.appendChild(qrBox);
+        card.appendChild(payload);
+        grid.appendChild(card);
+
+        new QRCode(qrBox, {
+            text: option.payload,
+            width: 150,
+            height: 150,
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    });
+}
+
+function closeQrLibrary() {
+    const modal = document.getElementById("qrLibraryModal");
+    if (modal) modal.style.display = "none";
+}
+
+/* ========================================================= */
+
 
 /* LOGIN */
 
@@ -54,8 +358,16 @@ function showPage(pageId) {
     document.getElementById("backupPage")
         .style.display = "none";
 
+    const profilePage = document.getElementById("goatProfilePage");
+    if (profilePage) profilePage.style.display = "none";
+
     document.getElementById(pageId)
         .style.display = "block";
+
+    if (pageId === "goatPage") {
+        activeGoatTag = null;
+        renderGoats(currentFilteredGoats || goats);
+    }
 
     if (pageId === "dashboardPage") {
 
@@ -412,23 +724,38 @@ function calculateAge(dob) {
 /* GOATS */
 function renderGoats(filteredGoats = goats) {
 
-    const goatList =
-        document.getElementById("goatList");
+    /* When a profile is open, render only that goat's full record card.
+       Otherwise show compact clickable search results on the management page. */
+    if (activeGoatTag) {
+        filteredGoats = goats.filter(
+            g => String(g.tag).toLowerCase() === String(activeGoatTag).toLowerCase()
+        );
+    }
 
-    const totalGoats =
-        document.getElementById("totalGoats");
+    const goatList = document.getElementById(
+        activeGoatTag ? "goatProfileContent" : "goatList"
+    );
+
+    const totalGoats = document.getElementById("totalGoats");
+    if (!goatList) return;
 
     goatList.innerHTML = "";
 
-    totalGoats.innerText =
-        `Total Goats: ${filteredGoats.length}`;
+    if (totalGoats) {
+        totalGoats.innerText = `Total Goats: ${goats.length}`;
+    }
+
+    if (activeGoatTag && filteredGoats.length === 0) {
+        goatList.innerHTML = '<div class="empty-goat-state">Goat not found. <button onclick="backToGoatSearch()">Back to search</button></div>';
+        return;
+    }
 
     filteredGoats.forEach((goat) => {
 
         const originalIndex =
-            goats.indexOf(goat);
-
-        /* ARRAYS */
+            goats.findIndex(
+                g => g.tag === goat.tag
+            );
 
         if (!goat.vaccinations)
             goat.vaccinations = [];
@@ -445,15 +772,34 @@ function renderGoats(filteredGoats = goats) {
         if (!goat.saleRecords)
             goat.saleRecords = [];
 
+        /* MANAGEMENT PAGE: compact result cards. Click a card to open its own page. */
+        if (!activeGoatTag) {
+            const safeTag = String(goat.tag || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const safeBreed = String(goat.breed || "—").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const safeGender = String(goat.gender || "—").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const safeTagForJs = String(goat.tag || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+            goatList.innerHTML += `
+                <button type="button" class="goat-summary-card" onclick="openGoatProfile('${safeTagForJs}')" aria-label="Open goat ${safeTag}">
+                    <span class="goat-summary-avatar">${goat.image ? `<img src="${goat.image}" alt="">` : '🐐'}</span>
+                    <span class="goat-summary-main">
+                        <strong>${safeTag}</strong>
+                        <span>${safeBreed} · ${safeGender}</span>
+                        <small>DOB: ${String(goat.dob || "—")}</small>
+                    </span>
+                    <span class="goat-summary-age">${calculateAge(goat.dob)}</span>
+                    <i class="fa-solid fa-chevron-right goat-summary-chevron"></i>
+                </button>
+            `;
+            return;
+        }
+
         /* REMINDERS */
 
         let reminderHTML = "";
 
         const today = new Date();
 
-        /* =========================
-           VACCINE REMINDER
-        ========================= */
+        /* VACCINE REMINDER */
 
         if (
             goat.vaccinations.length > 0
@@ -478,19 +824,14 @@ function renderGoats(filteredGoats = goats) {
 
                 const diffDays =
                     Math.ceil(
-
                         (
                             nextVaccine.getTime()
                             -
                             today.getTime()
                         )
-
                         /
-
                         (1000 * 60 * 60 * 24)
                     );
-
-                /* DUE */
 
                 if (
                     diffDays >= 0
@@ -516,8 +857,6 @@ function renderGoats(filteredGoats = goats) {
                     `;
                 }
 
-                /* OVERDUE */
-
                 if (diffDays < 0) {
 
                     reminderHTML += `
@@ -539,9 +878,7 @@ function renderGoats(filteredGoats = goats) {
             }
         }
 
-        /* =========================
-           DELIVERY REMINDER
-        ========================= */
+        /* DELIVERY REMINDER */
 
         if (
             goat.breedingRecords.length > 0
@@ -564,20 +901,17 @@ function renderGoats(filteredGoats = goats) {
 
                 const deliveryDate =
                     new Date(
-                        lastBreeding.expectedDelivery
+                        lastBreeding.deliveryDate
                     );
 
                 const diffDelivery =
                     Math.ceil(
-
                         (
                             deliveryDate.getTime()
                             -
                             today.getTime()
                         )
-
                         /
-
                         (1000 * 60 * 60 * 24)
                     );
 
@@ -607,15 +941,9 @@ function renderGoats(filteredGoats = goats) {
             }
         }
 
-        /* =========================
-           GOAT CARD
-        ========================= */
-
         goatList.innerHTML += `
 
             <div class="goat-card">
-
-                <!-- HEADER -->
 
                 <div class="goat-header">
 
@@ -643,34 +971,21 @@ function renderGoats(filteredGoats = goats) {
 
                 </div>
 
-                <!-- IMAGE -->
-
-                ${
-                    goat.image
-
+                ${goat.image
                     ?
-
                     `
-                    <img
-                        src="${goat.image}"
-                        class="goat-image"
-                    >
+                        <img
+                            src="${goat.image}"
+                            class="goat-image"
+                        >
                     `
-
                     :
-
                     ""
                 }
 
-                <!-- REMINDERS -->
-
                 ${reminderHTML}
 
-                <!-- INFO GRID -->
-
                 <div class="goat-info-grid">
-
-                    <!-- BREED -->
 
                     <div class="info-box">
 
@@ -688,8 +1003,6 @@ function renderGoats(filteredGoats = goats) {
 
                     </div>
 
-                    <!-- DOB -->
-
                     <div class="info-box">
 
                         <span class="info-label">
@@ -700,17 +1013,11 @@ function renderGoats(filteredGoats = goats) {
 
                         <span class="info-value">
 
-                            ${new Date(goat.dob)
-                                .toLocaleDateString(
-                                    "en-GB"
-                                )
-                            }
+                            ${goat.dob}
 
                         </span>
 
                     </div>
-
-                    <!-- STATUS -->
 
                     <div class="info-box">
 
@@ -728,142 +1035,9 @@ function renderGoats(filteredGoats = goats) {
 
                     </div>
 
-                    <!-- MOTHER -->
-
-                    ${
-                        goat.motherTag
-
-                        ?
-
-                        `
-                        <div class="info-box">
-
-                            <span class="info-label">
-
-                                Mother
-
-                            </span>
-
-                            <span
-                                class="info-value clickable-parent"
-                                onclick="openChildGoat('${goat.motherTag}')"
-                            >
-
-                                🐐 ${goat.motherTag}
-
-                            </span>
-
-                        </div>
-                        `
-
-                        :
-
-                        ""
-                    }
-
-                    <!-- FATHER -->
-
-                    ${
-                        goat.fatherTag
-
-                        ?
-
-                        `
-                        <div class="info-box">
-
-                            <span class="info-label">
-
-                                Father
-
-                            </span>
-
-                            <span
-                                class="info-value clickable-parent"
-                                onclick="openChildGoat('${goat.fatherTag}')"
-                            >
-
-                                🐐 ${goat.fatherTag}
-
-                            </span>
-
-                        </div>
-                        `
-
-                        :
-
-                        ""
-                    }
-
-                    <!-- CHILDREN -->
-
-                    ${
-                        goat.breedingRecords &&
-                        goat.breedingRecords.some(
-                            record =>
-                            record.childTags &&
-                            record.childTags.length > 0
-                        )
-
-                        ?
-
-                        `
-                        <div class="info-box child-info-box">
-
-                            <span class="info-label">
-
-                                Children
-
-                            </span>
-
-                            <div class="children-flow">
-
-                                ${
-                                    goat.breedingRecords
-                                    .map(record => {
-
-                                        if (
-                                            record.childTags &&
-                                            record.childTags.length > 0
-                                        ) {
-
-                                            return record.childTags
-                                            .map(tag => `
-
-                                                <div
-                                                    class="child-node"
-                                                    onclick="openChildGoat('${tag}')"
-                                                >
-
-                                                    🐐 ${tag}
-
-                                                </div>
-
-                                            `)
-                                            .join(`
-                                                <span class="flow-line">
-                                                    ➜
-                                                </span>
-                                            `);
-                                        }
-
-                                        return "";
-
-                                    }).join("")
-                                }
-
-                            </div>
-
-                        </div>
-                        `
-
-                        :
-
-                        ""
-                    }
-
                 </div>
 
-                <!-- VACCINATIONS -->
+                <!-- VACCINATION -->
 
                 <div class="record-section">
 
@@ -872,6 +1046,7 @@ function renderGoats(filteredGoats = goats) {
                     </h3>
 
                     ${
+
                         goat.vaccinations.length > 0
 
                         ?
@@ -881,15 +1056,11 @@ function renderGoats(filteredGoats = goats) {
                             <div class="record-card">
 
                                 <strong>
-
                                     ${v.name}
-
                                 </strong>
 
                                 <span>
-
                                     ${v.date}
-
                                 </span>
 
                             </div>
@@ -912,6 +1083,7 @@ function renderGoats(filteredGoats = goats) {
                     </h3>
 
                     ${
+
                         goat.weights.length > 0
 
                         ?
@@ -921,15 +1093,11 @@ function renderGoats(filteredGoats = goats) {
                             <div class="record-card">
 
                                 <strong>
-
                                     ${w.weight} KG
-
                                 </strong>
 
                                 <span>
-
                                     ${w.date}
-
                                 </span>
 
                             </div>
@@ -952,6 +1120,7 @@ function renderGoats(filteredGoats = goats) {
                     </h3>
 
                     ${
+
                         goat.healthRecords.length > 0
 
                         ?
@@ -961,21 +1130,15 @@ function renderGoats(filteredGoats = goats) {
                             <div class="record-card">
 
                                 <strong>
-
                                     ${h.problem}
-
                                 </strong>
 
                                 <span>
-
                                     ${h.medicine}
-
                                 </span>
 
                                 <small>
-
                                     ${h.date || "N/A"}
-
                                 </small>
 
                             </div>
@@ -998,6 +1161,7 @@ function renderGoats(filteredGoats = goats) {
                     </h3>
 
                     ${
+
                         goat.breedingRecords.length > 0
 
                         ?
@@ -1015,13 +1179,6 @@ function renderGoats(filteredGoats = goats) {
 
                                 <span>
 
-                                    Father:
-                                    ${b.fatherTag || "N/A"}
-
-                                </span>
-
-                                <span>
-
                                     Pregnancy:
                                     ${b.pregnancyStatus}
 
@@ -1030,7 +1187,7 @@ function renderGoats(filteredGoats = goats) {
                                 <span>
 
                                     Delivery:
-                                    ${b.expectedDelivery}
+                                    ${b.deliveryDate}
 
                                 </span>
 
@@ -1050,9 +1207,11 @@ function renderGoats(filteredGoats = goats) {
 
                                 <small>
 
-                                    Children:
+                                    Children Tags:
                                     ${
-                                        b.childTags &&
+
+                                        b.childTags
+                                        &&
                                         b.childTags.length > 0
 
                                         ?
@@ -1086,6 +1245,7 @@ function renderGoats(filteredGoats = goats) {
                     </h3>
 
                     ${
+
                         goat.saleRecords.length > 0
 
                         ?
@@ -1125,7 +1285,7 @@ function renderGoats(filteredGoats = goats) {
                                     <span>
 
                                         Buyer:
-                                        ${s.buyerName || s.buyer}
+                                        ${s.buyer}
 
                                     </span>
 
@@ -1146,7 +1306,7 @@ function renderGoats(filteredGoats = goats) {
 
                 </div>
 
-                <!-- ACTION BUTTONS -->
+                <!-- BUTTONS -->
 
                 <div class="action-buttons">
 
@@ -1181,11 +1341,6 @@ function renderGoats(filteredGoats = goats) {
                     <button onclick="addSaleRecord(${originalIndex})">
                         💰 Sale
                     </button>
-                    <button onclick="openFamilyTree('${goat.tag}')">
-
-    🌳 Family Tree
-
-</button>
 
                 </div>
 
@@ -1194,262 +1349,47 @@ function renderGoats(filteredGoats = goats) {
     });
 }
 
-function openChildGoat(tag) {
-
-    /* FIND GOAT */
-
-    const goat =
-        goats.find(
-
-            g =>
-
-            g.tag.toLowerCase()
-            ===
-            tag.toLowerCase()
-        );
-
-    /* NOT FOUND */
+/* OPEN A SINGLE GOAT PROFILE */
+function openGoatProfile(tag) {
+    const goat = goats.find(
+        g => String(g.tag).toLowerCase() === String(tag).toLowerCase()
+    );
 
     if (!goat) {
-
-        alert(
-            "Child goat not found"
-        );
-
+        alert("Goat not found");
         return;
     }
 
-    /* OPEN GOAT PAGE */
+    activeGoatTag = goat.tag;
+    const heading = document.getElementById("goatProfileHeading");
+    if (heading) heading.textContent = `🐐 ${goat.tag} — Goat Profile`;
 
+    showPage("goatProfilePage");
+    renderGoats([goat]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* RETURN TO SEARCH / MANAGEMENT PAGE */
+function backToGoatSearch() {
+    activeGoatTag = null;
     showPage("goatPage");
-
-    /* SEARCH */
-
-    document.getElementById(
-        "searchBox"
-    ).value = tag;
-
-    /* RENDER */
-
-    renderGoats();
-
-    /* SCROLL TO GOAT */
-
-    setTimeout(() => {
-
-        const goatCards =
-            document.querySelectorAll(
-                ".goat-card"
-            );
-
-        goatCards.forEach(card => {
-
-            if (
-                card.innerText
-                .toLowerCase()
-                .includes(
-                    tag.toLowerCase()
-                )
-            ) {
-
-                card.scrollIntoView({
-
-                    behavior: "smooth",
-
-                    block: "center"
-                });
-
-                /* HIGHLIGHT */
-
-                card.style.boxShadow =
-                    "0 0 0 4px #22c55e";
-
-                setTimeout(() => {
-
-                    card.style.boxShadow =
-                        "";
-
-                }, 2000);
-            }
-        });
-
-    }, 300);
+    renderGoats(currentFilteredGoats || goats);
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
-/* =========================
-   OPEN FAMILY TREE
-========================= */
-
-function openFamilyTree(tag) {
-
-    /* FIND GOAT */
-
-    const goat =
-        goats.find(
-
-            g =>
-
-            g.tag.toLowerCase()
-            ===
-            tag.toLowerCase()
-        );
-
-    if (!goat) {
-
-        alert(
-            "Goat not found"
-        );
-
-        return;
-    }
-
-    /* CONTAINER */
-
-    const container =
-        document.getElementById(
-            "familyTreeContainer"
-        );
-
-    /* CHILDREN */
-
-    const children =
-        goats.filter(
-
-            g =>
-
-            g.motherTag === goat.tag
-            ||
-            g.fatherTag === goat.tag
-        );
-
-    /* RENDER */
-
-    container.innerHTML = `
-
-        <div class="tree-wrapper">
-
-            <!-- FATHER -->
-
-            ${
-                goat.fatherTag
-
-                ?
-
-                `
-                <div
-    class="tree-node parent-node"
-    onclick="openFamilyTree('${goat.fatherTag}')"
->
-
-                    🐐 Father
-
-                    <strong>
-
-                        ${goat.fatherTag}
-
-                    </strong>
-
-                </div>
-                `
-
-                :
-
-                ""
-            }
-
-            <!-- MOTHER -->
-
-            ${
-                goat.motherTag
-
-                ?
-
-                `
-                <div
-    class="tree-node parent-node"
-    onclick="openFamilyTree('${goat.motherTag}')"
->
-                    🐐 Mother
-
-                    <strong>
-
-                        ${goat.motherTag}
-
-                    </strong>
-
-                </div>
-                `
-
-                :
-
-                ""
-            }
-
-            <!-- CURRENT GOAT -->
-
-            <div class="tree-node current-node">
-
-                🐐 ${goat.tag}
-
-            </div>
-
-            <!-- CHILDREN -->
-
-            <div class="children-tree">
-
-                ${
-                    children.length > 0
-
-                    ?
-
-                    children.map(child => `
-
-                        <div
-    class="tree-node child-tree-node"
-    onclick="openFamilyTree('${child.tag}')"
->
-
-                            🐐 ${child.tag}
-
-                        </div>
-
-                    `).join("")
-
-                    :
-
-                    "<p>No children found</p>"
-                }
-
-            </div>
-
-        </div>
-    `;
-
-    /* OPEN MODAL */
-
-    document.getElementById(
-        "familyTreeModal"
-    ).style.display = "flex";
-}
-
-/* =========================
-   CLOSE FAMILY TREE
-========================= */
-
-function closeFamilyTree() {
-
-    document.getElementById(
-        "familyTreeModal"
-    ).style.display = "none";
-}
-
 
 /* ADD GOAT */
 function addGoat() {
 
-    const tag =
+    let tag =
         document.getElementById(
             "tag"
-        ).value;
+        ).value.trim();
+
+    // If no tag was entered manually, assign the next top-level SP tag.
+    if (!tag && editIndex === -1) {
+        tag = getNextGoatTag();
+        document.getElementById("tag").value = tag;
+    }
 
     /* BREED */
 
@@ -1499,6 +1439,16 @@ function addGoat() {
             "Please fill all fields"
         );
 
+        return;
+    }
+
+    const duplicateTagIndex = goats.findIndex((goat, index) =>
+        String(goat.tag || "").trim().toLowerCase() === tag.toLowerCase()
+        && index !== editIndex
+    );
+
+    if (duplicateTagIndex !== -1) {
+        alert("A goat with tag " + tag + " already exists. Please use a unique tag.");
         return;
     }
 
@@ -1595,6 +1545,10 @@ function saveGoat(
         goat.saleRecords =
             goats[editIndex].saleRecords || [];
 
+        goat.status = goats[editIndex].status || "Active";
+        goat.motherTag = goats[editIndex].motherTag || "";
+        goat.fatherTag = goats[editIndex].fatherTag || "";
+
         if (!image) {
 
             goat.image =
@@ -1632,17 +1586,27 @@ function editGoat(index) {
         .value = goat.dob;
 
     editIndex = index;
+
+    /* The edit form lives on the management page. */
+    showPage("goatPage");
 }
 
 /* DELETE */
 
 function deleteGoat(index) {
 
+    const deletedTag = goats[index] ? goats[index].tag : null;
     goats.splice(index, 1);
 
+    if (activeGoatTag && deletedTag && String(activeGoatTag).toLowerCase() === String(deletedTag).toLowerCase()) {
+        activeGoatTag = null;
+        showPage("goatPage");
+    }
+
+    currentFilteredGoats = goats;
     saveData();
 
-    renderGoats();
+    renderGoats(currentFilteredGoats);
 }
 
 /* VACCINATION */
@@ -1900,24 +1864,15 @@ function saveBreedingRecord() {
             "matingDate"
         ).value;
 
-    const fatherTag =
-        document.getElementById(
-            "fatherTag"
-        ).value.trim();
-
     const pregnancyStatus =
         document.getElementById(
             "pregnancyStatus"
         ).value;
 
-    /* VALIDATION */
-
     if (
         !matingDate
         ||
         !pregnancyStatus
-        ||
-        !fatherTag
     ) {
 
         alert(
@@ -1939,12 +1894,9 @@ function saveBreedingRecord() {
         delivery.getDate() + 150
     );
 
-    const expectedDelivery =
-        delivery
-        .toISOString()
+    const deliveryDate =
+        delivery.toISOString()
         .split("T")[0];
-
-    /* CREATE ARRAY */
 
     if (
         !goats[currentBreedingIndex]
@@ -1955,34 +1907,17 @@ function saveBreedingRecord() {
             .breedingRecords = [];
     }
 
-    /* SAVE RECORD */
-
     goats[currentBreedingIndex]
         .breedingRecords.push({
 
-            matingDate:
-                matingDate,
+            matingDate,
+            pregnancyStatus,
+            deliveryDate,
 
-            fatherTag:
-                fatherTag,
+            givenBirth: "No",
 
-            pregnancyStatus:
-                pregnancyStatus,
-
-            expectedDelivery:
-                expectedDelivery,
-
-            givenBirth:
-                "No",
-
-            kidsType:
-                "Not Yet",
-
-            childTags:
-                []
+            kidsType: "Not Yet"
         });
-
-    /* SAVE */
 
     saveData();
 
@@ -2033,8 +1968,6 @@ function saveBirthRecord() {
             "kidsType"
         ).value;
 
-    /* VALIDATION */
-
     if (!givenBirth) {
 
         alert(
@@ -2057,8 +1990,6 @@ function saveBirthRecord() {
         return;
     }
 
-    /* CHECK BREEDING RECORD */
-
     if (
         !goats[currentBirthIndex]
         .breedingRecords
@@ -2074,82 +2005,117 @@ function saveBirthRecord() {
         return;
     }
 
-    /* LAST RECORD */
-
     const lastRecord =
         goats[currentBirthIndex]
         .breedingRecords[
+
             goats[currentBirthIndex]
             .breedingRecords.length - 1
         ];
 
-    /* SAVE STATUS */
+    /* UPDATE BIRTH STATUS */
 
     lastRecord.givenBirth =
         givenBirth;
 
-    /* IF YES */
-
-    if (givenBirth === "Yes") {
+    if (
+        givenBirth === "Yes"
+    ) {
 
         lastRecord.kidsType =
             kidsType;
 
-        /* GET CHILD INPUTS */
+        /* CHILD TAGS */
 
-        const childInputs =
-            document.querySelectorAll(
-                ".childTagInput"
-            );
-
-        const childTags = [];
-
-        childInputs.forEach(input => {
-
-            const value =
-                input.value.trim();
-
-            if (value) {
-
-                childTags.push(value);
-            }
-        });
-
-        /* EXPECTED COUNT */
-
-        let expectedCount = 0;
+        let childTags = [];
 
         if (kidsType === "Single") {
 
-            expectedCount = 1;
+            const tag1 =
+                document.getElementById(
+                    "childTag1"
+                ).value;
+
+            if (!tag1) {
+
+                alert(
+                    "Enter Child Tag"
+                );
+
+                return;
+            }
+
+            childTags.push(tag1);
         }
 
         else if (
             kidsType === "Double"
         ) {
 
-            expectedCount = 2;
+            const tag1 =
+                document.getElementById(
+                    "childTag1"
+                ).value;
+
+            const tag2 =
+                document.getElementById(
+                    "childTag2"
+                ).value;
+
+            if (
+                !tag1
+                ||
+                !tag2
+            ) {
+
+                alert(
+                    "Enter All Child Tags"
+                );
+
+                return;
+            }
+
+            childTags.push(tag1);
+            childTags.push(tag2);
         }
 
         else if (
             kidsType === "Triplet"
         ) {
 
-            expectedCount = 3;
-        }
+            const tag1 =
+                document.getElementById(
+                    "childTag1"
+                ).value;
 
-        /* VALIDATE */
+            const tag2 =
+                document.getElementById(
+                    "childTag2"
+                ).value;
 
-        if (
-            childTags.length !==
-            expectedCount
-        ) {
+            const tag3 =
+                document.getElementById(
+                    "childTag3"
+                ).value;
 
-            alert(
-                "Enter All Child Tags"
-            );
+            if (
+                !tag1
+                ||
+                !tag2
+                ||
+                !tag3
+            ) {
 
-            return;
+                alert(
+                    "Enter All Child Tags"
+                );
+
+                return;
+            }
+
+            childTags.push(tag1);
+            childTags.push(tag2);
+            childTags.push(tag3);
         }
 
         /* SAVE CHILD TAGS */
@@ -2157,39 +2123,7 @@ function saveBirthRecord() {
         lastRecord.childTags =
             childTags;
 
-        /* AUTO LINK CHILDREN */
-
-        childTags.forEach(tag => {
-
-            const childGoat =
-                goats.find(
-
-                    goat =>
-
-                    goat.tag.toLowerCase()
-                    ===
-                    tag.toLowerCase()
-                );
-
-            /* IF CHILD EXISTS */
-
-            if (childGoat) {
-
-                /* MOTHER */
-
-                childGoat.motherTag =
-                    goats[currentBirthIndex]
-                    .tag;
-
-                /* FATHER */
-
-                childGoat.fatherTag =
-                    lastRecord.fatherTag;
-            }
-        });
-    }
-
-    else {
+    } else {
 
         lastRecord.kidsType =
             "Not Yet";
@@ -2197,8 +2131,6 @@ function saveBirthRecord() {
         lastRecord.childTags =
             [];
     }
-
-    /* SAVE */
 
     saveData();
 
@@ -2210,6 +2142,7 @@ function saveBirthRecord() {
         "Birth Record Updated"
     );
 }
+
 
 function closeBirthModal() {
 
@@ -3101,6 +3034,7 @@ function downloadFilteredGoats() {
 }
 /*---------------------------------------------------*/
 /* CHILD TAG INPUTS */
+
 function generateChildTagInputs() {
 
     const kidsType =
@@ -3122,12 +3056,16 @@ function generateChildTagInputs() {
         count = 1;
     }
 
-    else if (kidsType === "Double") {
+    else if (
+        kidsType === "Double"
+    ) {
 
         count = 2;
     }
 
-    else if (kidsType === "Triplet") {
+    else if (
+        kidsType === "Triplet"
+    ) {
 
         count = 3;
     }
@@ -3143,13 +3081,11 @@ function generateChildTagInputs() {
             <input
                 type="text"
                 id="childTag${i}"
-                class="childTagInput"
                 placeholder="Child Tag ${i}"
             >
         `;
     }
 }
-
 
 /* CUSTOM BREED */
 
@@ -3208,39 +3144,11 @@ function searchGoats() {
                 .includes(searchText)
         );
     currentFilteredGoats = filtered;
+    activeGoatTag = null;
     renderGoats(filtered);
 }
 
-function scrollToSearch() {
 
-    /* OPEN GOAT PAGE */
-
-    showPage("goatPage");
-
-    /* SEARCH BOX */
-
-    const searchBox =
-        document.getElementById(
-            "searchBox"
-        );
-
-    /* SCROLL */
-
-    searchBox.scrollIntoView({
-
-        behavior: "smooth",
-
-        block: "center"
-    });
-
-    /* FOCUS */
-
-    setTimeout(() => {
-
-        searchBox.focus();
-
-    }, 500);
-}
 
 
 
