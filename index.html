@@ -796,6 +796,13 @@
 
         </select>
 
+        <input
+            type="text"
+            id="breedingFatherTag"
+            placeholder="Father Tag (optional)"
+            autocomplete="off"
+        >
+
         <button onclick="saveBreedingRecord()">
             Save
         </button>
@@ -816,7 +823,7 @@
 
         <h2>Update Birth</h2>
 
-        <select id="givenBirth">
+        <select id="givenBirth" onchange="toggleBirthKidsFields()">
 
             <option value="">
                 Given Birth?
@@ -853,7 +860,10 @@
     </option>
 
 </select>
-        <div id="childTagsContainer"></div>
+        <div id="birthKidsFields">
+            <p class="birth-form-hint">Child tags are generated automatically. Enter each kid's gender and actual birth date.</p>
+            <div id="childTagsContainer"></div>
+        </div>
         <button onclick="saveBirthRecord()">
             Save
         </button>
