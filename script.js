@@ -3772,21 +3772,17 @@ renderExpenses();
 
 renderIncome();
 
-/* SERVICE WORKER */
-
+/* SERVICE WORKER: relative path also works when hosted in a project subfolder. */
 if ("serviceWorker" in navigator) {
-
-    navigator.serviceWorker
-        .register(
-            "service-worker.js"
-        )
-
-        .then(() => {
-
-            console.log(
-                "Service Worker Registered"
-            );
-        });
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js")
+            .then(registration => {
+                console.log("Service Worker Registered:", registration.scope);
+            })
+            .catch(error => {
+                console.error("Service Worker registration failed:", error);
+            });
+    });
 }
 
 /* INTERACTIVE GOAT PROFILE: collapsible record sections.
