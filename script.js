@@ -1869,6 +1869,15 @@ function saveBreedingRecord() {
             "pregnancyStatus"
         ).value;
 
+    const fatherTag = (
+        document.getElementById("breedingFatherTag")?.value || ""
+    ).trim();
+
+    if (fatherTag && !goats.some(g => String(g.tag || "").toLowerCase() === fatherTag.toLowerCase())) {
+        alert("Father tag was not found. Enter an existing goat tag or leave it blank.");
+        return;
+    }
+
     if (
         !matingDate
         ||
@@ -1913,6 +1922,7 @@ function saveBreedingRecord() {
             matingDate,
             pregnancyStatus,
             deliveryDate,
+            fatherTag,
 
             givenBirth: "No",
 
@@ -1943,220 +1953,211 @@ function closeBreedingModal() {
     document.getElementById(
         "pregnancyStatus"
     ).value = "";
+
+    const fatherTagInput = document.getElementById("breedingFatherTag");
+    if (fatherTagInput) fatherTagInput.value = "";
 }
 /* BIRTH MODAL */
 
 let currentBirthIndex = -1;
 
 function updateBirthRecord(index) {
-
     currentBirthIndex = index;
 
-    document.getElementById(
-        "birthModal"
-    ).style.display = "flex";
+    const goat = goats[currentBirthIndex];
+    const records = goat && Array.isArray(goat.breedingRecords) ? goat.breedingRecords : [];
+    const lastRecord = records.length ? records[records.length - 1] : null;
+
+    const givenBirthSelect = document.getElementById("givenBirth");
+    const kidsTypeSelect = document.getElementById("kidsType");
+    if (givenBirthSelect) givenBirthSelect.value = lastRecord?.givenBirth === "Yes" ? "Yes" : "";
+    if (kidsTypeSelect) {
+        kidsTypeSelect.value = ["Single", "Double", "Triplet"].includes(lastRecord?.kidsType)
+            ? lastRecord.kidsType
+            : "";
+    }
+
+    toggleBirthKidsFields();
+    if (kidsTypeSelect && kidsTypeSelect.value) generateChildTagInputs();
+
+    document.getElementById("birthModal").style.display = "flex";
 }
+
+function escapeTagForRegex(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/* Return the next sequential direct-child tag for a mother. */
+function getNextChildTag(parentTag, reservedTags = []) {
+    const parent = String(parentTag || "").trim();
+    if (!parent) return "";
+
+    const pattern = new RegExp("^" + escapeTagForRegex(parent) + "-(\\d+)$", "i");
+    let maxNumber = 0;
+    const allTags = [
+        ...(Array.isArray(goats) ? goats.map(g => g && g.tag) : []),
+        ...(Array.isArray(reservedTags) ? reservedTags : [])
+    ];
+
+    allTags.forEach(rawTag => {
+        const tag = String(rawTag || "").trim();
+        const match = tag.match(pattern);
+        if (match) {
+            const number = Number(match[1]);
+            if (Number.isSafeInteger(number) && number > maxNumber) maxNumber = number;
+        }
+    });
+
+    return parent + "-" + String(maxNumber + 1).padStart(2, "0");
+}
+
+function toggleBirthKidsFields() {
+    const givenBirth = document.getElementById("givenBirth")?.value || "";
+    const fields = document.getElementById("birthKidsFields");
+    if (fields) fields.style.display = givenBirth === "Yes" ? "block" : "none";
+
+    const kidsType = document.getElementById("kidsType");
+    const container = document.getElementById("childTagsContainer");
+    if (givenBirth !== "Yes" && container) container.innerHTML = "";
+    if (givenBirth === "Yes" && kidsType && kidsType.value) generateChildTagInputs();
+}
+
 function saveBirthRecord() {
-
-    const givenBirth =
-        document.getElementById(
-            "givenBirth"
-        ).value;
-
-    const kidsType =
-        document.getElementById(
-            "kidsType"
-        ).value;
+    const givenBirth = document.getElementById("givenBirth")?.value || "";
+    const kidsType = document.getElementById("kidsType")?.value || "";
+    const mother = goats[currentBirthIndex];
 
     if (!givenBirth) {
-
-        alert(
-            "Select Birth Status"
-        );
-
+        alert("Select Birth Status");
+        return;
+    }
+    if (!mother) {
+        alert("Could not find the mother goat. Close the form and try again.");
+        return;
+    }
+    if (!Array.isArray(mother.breedingRecords) || mother.breedingRecords.length === 0) {
+        alert("No Breeding Record Found");
         return;
     }
 
-    if (
-        givenBirth === "Yes"
-        &&
-        !kidsType
-    ) {
+    const lastRecord = mother.breedingRecords[mother.breedingRecords.length - 1];
 
-        alert(
-            "Select Kids Type"
-        );
-
+    if (givenBirth === "No") {
+        lastRecord.givenBirth = "No";
+        lastRecord.kidsType = "Not Yet";
+        // Keep previously saved children if this record is being edited; don't delete goat records.
+        saveData();
+        renderGoats();
+        closeBirthModal();
+        alert("Birth Record Updated");
         return;
     }
 
-    if (
-        !goats[currentBirthIndex]
-        .breedingRecords
-        ||
-        goats[currentBirthIndex]
-        .breedingRecords.length === 0
-    ) {
-
-        alert(
-            "No Breeding Record Found"
-        );
-
+    if (!["Single", "Double", "Triplet"].includes(kidsType)) {
+        alert("Select Kids Type");
         return;
     }
 
-    const lastRecord =
-        goats[currentBirthIndex]
-        .breedingRecords[
-
-            goats[currentBirthIndex]
-            .breedingRecords.length - 1
-        ];
-
-    /* UPDATE BIRTH STATUS */
-
-    lastRecord.givenBirth =
-        givenBirth;
-
-    if (
-        givenBirth === "Yes"
-    ) {
-
-        lastRecord.kidsType =
-            kidsType;
-
-        /* CHILD TAGS */
-
-        let childTags = [];
-
-        if (kidsType === "Single") {
-
-            const tag1 =
-                document.getElementById(
-                    "childTag1"
-                ).value;
-
-            if (!tag1) {
-
-                alert(
-                    "Enter Child Tag"
-                );
-
-                return;
-            }
-
-            childTags.push(tag1);
-        }
-
-        else if (
-            kidsType === "Double"
-        ) {
-
-            const tag1 =
-                document.getElementById(
-                    "childTag1"
-                ).value;
-
-            const tag2 =
-                document.getElementById(
-                    "childTag2"
-                ).value;
-
-            if (
-                !tag1
-                ||
-                !tag2
-            ) {
-
-                alert(
-                    "Enter All Child Tags"
-                );
-
-                return;
-            }
-
-            childTags.push(tag1);
-            childTags.push(tag2);
-        }
-
-        else if (
-            kidsType === "Triplet"
-        ) {
-
-            const tag1 =
-                document.getElementById(
-                    "childTag1"
-                ).value;
-
-            const tag2 =
-                document.getElementById(
-                    "childTag2"
-                ).value;
-
-            const tag3 =
-                document.getElementById(
-                    "childTag3"
-                ).value;
-
-            if (
-                !tag1
-                ||
-                !tag2
-                ||
-                !tag3
-            ) {
-
-                alert(
-                    "Enter All Child Tags"
-                );
-
-                return;
-            }
-
-            childTags.push(tag1);
-            childTags.push(tag2);
-            childTags.push(tag3);
-        }
-
-        /* SAVE CHILD TAGS */
-
-        lastRecord.childTags =
-            childTags;
-
-    } else {
-
-        lastRecord.kidsType =
-            "Not Yet";
-
-        lastRecord.childTags =
-            [];
+    const childCards = Array.from(document.querySelectorAll(".birth-kid-card"));
+    const expectedCount = kidsType === "Single" ? 1 : kidsType === "Double" ? 2 : 3;
+    if (childCards.length !== expectedCount) {
+        generateChildTagInputs();
+        alert("Please check the child details and try again.");
+        return;
     }
+
+    const childDetails = [];
+    for (let i = 0; i < childCards.length; i++) {
+        const card = childCards[i];
+        const tag = String(card.querySelector(".child-auto-tag")?.value || "").trim();
+        const gender = String(card.querySelector(".child-gender")?.value || "").trim();
+        const dob = String(card.querySelector(".child-dob")?.value || "").trim();
+
+        if (!tag || !gender || !dob) {
+            alert("Please enter the gender and birth date for every kid.");
+            return;
+        }
+        if (dob > new Date().toISOString().slice(0, 10)) {
+            alert("A kid's birth date cannot be in the future.");
+            return;
+        }
+        childDetails.push({ tag, gender, dob });
+    }
+
+    // Ensure there are no duplicate tags in this litter or conflicts with unrelated goats.
+    const uniqueTags = new Set(childDetails.map(k => k.tag.toLowerCase()));
+    if (uniqueTags.size !== childDetails.length) {
+        alert("Generated child tags are duplicated. Please change the litter type and try again.");
+        return;
+    }
+
+    for (const kid of childDetails) {
+        const existing = goats.find(g => String(g.tag || "").toLowerCase() === kid.tag.toLowerCase());
+        if (existing && String(existing.motherTag || "").toLowerCase() !== String(mother.tag || "").toLowerCase()) {
+            alert("Tag " + kid.tag + " is already used by another goat. Please reopen the birth form to refresh the tags.");
+            return;
+        }
+    }
+
+    // Commit only after all fields have passed validation.
+    lastRecord.givenBirth = "Yes";
+    lastRecord.kidsType = kidsType;
+    lastRecord.childTags = childDetails.map(k => k.tag);
+    lastRecord.birthDate = childDetails[0]?.dob || lastRecord.birthDate || "";
+
+    childDetails.forEach(kid => {
+        let child = goats.find(g => String(g.tag || "").toLowerCase() === kid.tag.toLowerCase());
+        if (!child) {
+            child = {
+                tag: kid.tag,
+                breed: mother.breed || "",
+                gender: kid.gender,
+                dob: kid.dob,
+                image: "",
+                status: "Active",
+                motherTag: mother.tag,
+                fatherTag: lastRecord.fatherTag || "",
+                vaccinations: [],
+                weights: [],
+                healthRecords: [],
+                breedingRecords: [],
+                saleRecords: []
+            };
+            goats.push(child);
+        } else {
+            // Re-saving a birth updates the existing kid's core birth details without wiping its records.
+            child.breed = mother.breed || child.breed || "";
+            child.gender = kid.gender;
+            child.dob = kid.dob;
+            child.motherTag = mother.tag;
+            child.fatherTag = lastRecord.fatherTag || child.fatherTag || "";
+            child.status = child.status || "Active";
+            child.vaccinations = child.vaccinations || [];
+            child.weights = child.weights || [];
+            child.healthRecords = child.healthRecords || [];
+            child.breedingRecords = child.breedingRecords || [];
+            child.saleRecords = child.saleRecords || [];
+        }
+    });
 
     saveData();
-
-    renderGoats();
-
+    currentFilteredGoats = goats;
+    renderGoats(currentFilteredGoats);
     closeBirthModal();
-
-    alert(
-        "Birth Record Updated"
-    );
+    alert("Birth record saved. Child goat entries created: " + childDetails.map(k => k.tag).join(", "));
 }
 
-
 function closeBirthModal() {
+    const modal = document.getElementById("birthModal");
+    if (modal) modal.style.display = "none";
 
-    document.getElementById(
-        "birthModal"
-    ).style.display = "none";
-
-    document.getElementById(
-        "givenBirth"
-    ).value = "";
-
-    document.getElementById(
-        "kidsType"
-    ).value = "";
+    const givenBirth = document.getElementById("givenBirth");
+    const kidsType = document.getElementById("kidsType");
+    const container = document.getElementById("childTagsContainer");
+    if (givenBirth) givenBirth.value = "";
+    if (kidsType) kidsType.value = "";
+    if (container) container.innerHTML = "";
+    toggleBirthKidsFields();
 }
 /* CLEAR */
 
@@ -3036,54 +3037,51 @@ function downloadFilteredGoats() {
 /* CHILD TAG INPUTS */
 
 function generateChildTagInputs() {
-
-    const kidsType =
-        document.getElementById(
-            "kidsType"
-        ).value;
-
-    const container =
-        document.getElementById(
-            "childTagsContainer"
-        );
-
+    const kidsType = document.getElementById("kidsType")?.value || "";
+    const container = document.getElementById("childTagsContainer");
+    if (!container) return;
     container.innerHTML = "";
 
-    let count = 0;
+    const count = kidsType === "Single" ? 1 : kidsType === "Double" ? 2 : kidsType === "Triplet" ? 3 : 0;
+    const mother = goats[currentBirthIndex];
+    if (!count || !mother) return;
 
-    if (kidsType === "Single") {
+    const existingRecord = Array.isArray(mother.breedingRecords) && mother.breedingRecords.length
+        ? mother.breedingRecords[mother.breedingRecords.length - 1]
+        : null;
+    const savedTags = Array.isArray(existingRecord?.childTags) ? existingRecord.childTags : [];
+    const reserved = [];
 
-        count = 1;
-    }
+    for (let i = 0; i < count; i++) {
+        const savedTag = String(savedTags[i] || "").trim();
+        const savedGoat = savedTag ? goats.find(g => String(g.tag || "").toLowerCase() === savedTag.toLowerCase()) : null;
+        let tag;
+        if (savedGoat && String(savedGoat.motherTag || "").toLowerCase() === String(mother.tag || "").toLowerCase()) {
+            tag = savedGoat.tag;
+        } else {
+            tag = getNextChildTag(mother.tag, reserved);
+        }
+        reserved.push(tag);
 
-    else if (
-        kidsType === "Double"
-    ) {
-
-        count = 2;
-    }
-
-    else if (
-        kidsType === "Triplet"
-    ) {
-
-        count = 3;
-    }
-
-    for (
-        let i = 1;
-        i <= count;
-        i++
-    ) {
-
-        container.innerHTML += `
-
-            <input
-                type="text"
-                id="childTag${i}"
-                placeholder="Child Tag ${i}"
-            >
+        const card = document.createElement("div");
+        card.className = "birth-kid-card";
+        const savedGender = savedGoat?.gender || "";
+        const savedDob = savedGoat?.dob || "";
+        card.innerHTML = `
+            <div class="birth-kid-heading">Kid ${i + 1}</div>
+            <label class="birth-field-label" for="childTag${i + 1}">Auto-generated tag</label>
+            <input class="child-auto-tag" id="childTag${i + 1}" type="text" value="${tag.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}" readonly>
+            <label class="birth-field-label" for="childGender${i + 1}">Gender</label>
+            <select class="child-gender" id="childGender${i + 1}" required>
+                <option value="">Select Gender</option>
+                <option value="Male" ${savedGender === "Male" ? "selected" : ""}>Male</option>
+                <option value="Female" ${savedGender === "Female" ? "selected" : ""}>Female</option>
+            </select>
+            <label class="birth-field-label" for="childDob${i + 1}">Birth Date</label>
+            <input class="child-dob" id="childDob${i + 1}" type="date" max="${new Date().toISOString().slice(0, 10)}" value="${savedDob}">
+            <p class="birth-form-hint">Breed will be set automatically to ${String(mother.breed || "the mother's breed")}</p>
         `;
+        container.appendChild(card);
     }
 }
 
