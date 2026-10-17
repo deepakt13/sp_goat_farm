@@ -664,12 +664,30 @@
             Add Vaccination
         </h2>
 
+        <label for="vaccinePreset" class="vaccine-field-label">Select Vaccine</label>
+        <select id="vaccinePreset" onchange="toggleCustomVaccineName()">
+            <option value="">Select a vaccine</option>
+            <option value="PPR Vaccine">PPR Vaccine</option>
+            <option value="FMD Vaccine">FMD Vaccine</option>
+            <option value="Enterotoxaemia (ET) Vaccine">Enterotoxaemia (ET) Vaccine</option>
+            <option value="Goat Pox Vaccine">Goat Pox Vaccine</option>
+            <option value="Haemorrhagic Septicaemia (HS) Vaccine">Haemorrhagic Septicaemia (HS) Vaccine</option>
+            <option value="Anthrax Vaccine">Anthrax Vaccine</option>
+            <option value="CCPP Vaccine">CCPP Vaccine</option>
+            <option value="Brucellosis Vaccine">Brucellosis Vaccine</option>
+            <option value="ORF Vaccine">ORF Vaccine</option>
+            <option value="__custom__">Custom vaccine name…</option>
+        </select>
+
         <input
             type="text"
             id="vaccineName"
-            placeholder="Vaccine Name"
+            placeholder="Enter custom vaccine name"
+            aria-label="Custom vaccine name"
+            style="display: none;"
         >
 
+        <label for="vaccineDate" class="vaccine-field-label">Vaccination Date</label>
         <input
             type="date"
             id="vaccineDate"
@@ -738,17 +756,38 @@
 
         <h2>Add Health Record</h2>
 
-        <input
-            type="text"
-            id="healthProblem"
-            placeholder="Health Problem"
-        >
+        <label for="healthProblem">Health Problem</label>
+        <select id="healthProblem" onchange="toggleCustomHealthProblem()">
+            <option value="">Select health problem</option>
+            <option value="Fever">Fever</option>
+            <option value="Diarrhea">Diarrhea</option>
+            <option value="Loss of appetite">Loss of appetite</option>
+            <option value="Cough / respiratory problem">Cough / respiratory problem</option>
+            <option value="Bloat">Bloat</option>
+            <option value="Wound / injury">Wound / injury</option>
+            <option value="Lameness">Lameness</option>
+            <option value="Skin problem / mange">Skin problem / mange</option>
+            <option value="Worms / parasites">Worms / parasites</option>
+            <option value="Eye infection">Eye infection</option>
+            <option value="Mastitis">Mastitis</option>
+            <option value="Pregnancy / kidding issue">Pregnancy / kidding issue</option>
+            <option value="Custom">Custom health problem…</option>
+        </select>
+        <input type="text" id="healthProblemCustom" placeholder="Enter custom health problem" style="display:none">
 
-        <input
-            type="text"
-            id="healthMedicine"
-            placeholder="Medicine"
-        >
+        <label for="healthMedicine">Medicine / Treatment</label>
+        <select id="healthMedicine" onchange="toggleCustomHealthMedicine()">
+            <option value="">Select medicine / treatment recorded</option>
+            <option value="Veterinarian-prescribed medicine">Veterinarian-prescribed medicine</option>
+            <option value="Veterinarian-prescribed dewormer">Veterinarian-prescribed dewormer</option>
+            <option value="Electrolyte / oral rehydration support">Electrolyte / oral rehydration support</option>
+            <option value="Wound care prescribed by veterinarian">Wound care prescribed by veterinarian</option>
+            <option value="Vitamin / mineral supplement">Vitamin / mineral supplement</option>
+            <option value="Supportive care only">Supportive care only</option>
+            <option value="No medicine given">No medicine given</option>
+            <option value="Custom">Custom treatment…</option>
+        </select>
+        <input type="text" id="healthMedicineCustom" placeholder="Enter treatment prescribed / given" style="display:none">
 
         <input
             type="date"
@@ -765,6 +804,18 @@
 
     </div>
 
+</div>
+
+<!-- MARK GOAT AS DIED MODAL -->
+<div id="diedModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="diedModalTitle">
+    <div class="modal-content">
+        <h2 id="diedModalTitle">Mark Goat as Died</h2>
+        <p class="died-modal-note">This records the death date and changes the goat's status to <strong>Died</strong>. Existing records will be kept.</p>
+        <label for="goatDiedDate">Date of death</label>
+        <input type="date" id="goatDiedDate" required>
+        <button type="button" onclick="saveGoatDiedStatus()">Confirm Death</button>
+        <button type="button" class="died-cancel-button" onclick="closeDiedModal()">Cancel</button>
+    </div>
 </div>
 
 <!-- BREEDING MODAL -->
