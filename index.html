@@ -137,6 +137,11 @@
                 <input id="dashboardGoatSearch" type="search" placeholder="Find a goat by tag, e.g. SP01" onkeydown="if(event.key==='Enter') dashboardFindGoat()" aria-label="Find goat by tag">
                 <button type="button" onclick="dashboardFindGoat()">Find goat</button>
             </div>
+            <div class="dashboard-qr-actions" aria-label="Goat QR tools">
+                <button type="button" onclick="openGoatQrScanner()"><i class="fa-solid fa-qrcode"></i> Scan goat tag</button>
+                <button type="button" onclick="openQrLibrary()"><i class="fa-solid fa-print"></i> Print all goat tags</button>
+                <label class="dashboard-import-button"><i class="fa-solid fa-file-import"></i> Import goat backup<input type="file" accept="application/json,.json" onchange="restoreData(event)"></label>
+            </div>
 
             <div class="dashboard-top-cards">
                 <section class="dashboard-panel dashboard-attention-panel">
@@ -506,6 +511,7 @@
                 <h2 id="goatProfileHeading">Goat Profile</h2>
                 <p>Complete information and records for the selected goat.</p>
             </div>
+            <div id="goatProfileQr" class="goat-profile-qr"></div>
             <div id="goatProfileContent"></div>
         </div>
 
@@ -749,8 +755,8 @@
 <div id="qrEntryModal" class="modal qr-modal" role="dialog" aria-modal="true" aria-labelledby="qrEntryTitle">
     <div class="modal-content qr-modal-content">
         <button type="button" class="qr-modal-close" onclick="closeQrEntry()" aria-label="Close">×</button>
-        <h2 id="qrEntryTitle"><i class="fa-solid fa-qrcode"></i> Add Goat by QR</h2>
-        <p class="qr-help">Scan one of the farm's breed-and-gender QR codes. The next available SP tag and scanned details will be filled automatically.</p>
+        <h2 id="qrEntryTitle"><i class="fa-solid fa-qrcode"></i> Add or Find Goat by QR</h2>
+        <p class="qr-help">Scan an individual goat tag to open its profile, or scan a breed QR code to add a goat.</p>
 
         <div id="qrReader" class="qr-reader"></div>
         <div class="qr-scan-controls">
@@ -790,8 +796,8 @@
 <div id="qrLibraryModal" class="modal qr-modal" role="dialog" aria-modal="true" aria-labelledby="qrLibraryTitle">
     <div class="modal-content qr-library-content">
         <button type="button" class="qr-modal-close" onclick="closeQrLibrary()" aria-label="Close">×</button>
-        <h2 id="qrLibraryTitle"><i class="fa-solid fa-qrcode"></i> SP Goat Farm — Breed QR Codes</h2>
-        <p class="qr-help">Print this sheet and place each code at the appropriate pen or entry station. Each code sets breed and gender; tag number is generated from your current goat records.</p>
+        <h2 id="qrLibraryTitle"><i class="fa-solid fa-qrcode"></i> SP Goat Farm — Individual Goat Tags</h2>
+        <p class="qr-help">Print this sheet, cut out each label, and attach it to the matching goat. Each unique QR code identifies one tag ID in this app.</p>
         <div id="qrCodeGrid" class="qr-code-grid"></div>
         <div class="qr-library-actions">
             <button type="button" onclick="window.print()">Print QR Sheet</button>
