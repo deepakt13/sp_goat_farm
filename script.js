@@ -16,9 +16,9 @@ let farmChart = null;
 
 
 /* PHOTO COMPRESSION + CAMERA/GALLERY INPUTS
-   Compresses to a target of ~5 KB when practical. The target is not guaranteed
+   Compresses to a target of ~10 KB when practical. The target is not guaranteed
    for every image; a tiny image can lose identifying detail. */
-const GOAT_PHOTO_TARGET_BYTES = 5 * 1024;
+const GOAT_PHOTO_TARGET_BYTES = 10 * 1024;
 let goatCameraStream = null;
 let goatCameraPurpose = "goat";
 const capturedGoatPhotos = { goat: null, qr: null };
@@ -64,7 +64,7 @@ function compressGoatPhoto(file, targetBytes = GOAT_PHOTO_TARGET_BYTES) {
                         height = Math.max(48, Math.round(height * 0.78));
                     }
                     // If 5 KB is impossible, save the smallest result produced and disclose via console.
-                    console.warn("Goat photo could not reach 5 KB without further severe quality loss; saving the smallest compressed version.");
+                    console.warn("Goat photo could not reach 10 KB without further severe quality loss; saving the smallest compressed version.");
                     resolve(best);
                 } catch (error) {
                     reject(error);
