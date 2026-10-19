@@ -207,6 +207,18 @@ function openManualEntry() {
     if (tagInput && !tagInput.value.trim()) tagInput.value = getNextGoatTag();
 }
 
+function openGoatQrScanner() {
+    openQrEntry();
+    const title = document.getElementById("qrEntryTitle");
+    const message = document.getElementById("qrEntryMessage");
+    const details = document.getElementById("qrDetectedDetails");
+    if (title) title.innerHTML = '<i class="fa-solid fa-qrcode"></i> Scan Goat Tag';
+    if (message) message.textContent = "Start the camera and scan an individual goat tag QR code.";
+    if (details) details.style.display = "none";
+    const input = document.getElementById("qrPayloadInput");
+    if (input) input.placeholder = "Paste code, e.g. SPGOATID|SP01";
+}
+
 function openQrEntry() {
     const modal = document.getElementById("qrEntryModal");
     if (modal) modal.style.display = "flex";
@@ -294,6 +306,31 @@ function processQrPayloadFromInput() {
 function processQrPayload(rawPayload) {
     const message = document.getElementById("qrEntryMessage");
     const raw = String(rawPayload || "").trim();
+
+    // Individual goat tag QR: SPGOATID|<tag>. Imported JSON records use the same tags.
+    const idMatch = raw.match(/^SPGOATID\|(.+)$/i);
+    if (idMatch) {
+        const tag = idMatch[1].trim();
+        const existing = goats.find(g => String(g.tag || "").toLowerCase() === tag.toLowerCase());
+        if (existing) {
+            closeQrEntry();
+            openGoatProfile(existing.tag);
+        } else if (message) {
+            message.textContent = `No goat with tag ${tag} exists in this data. Import the matching JSON backup or check the tag.`;
+        }
+        return;
+    }
+
+    // Also support JSON payloads used by custom individual tags.
+    try {
+        const parsedId = JSON.parse(raw);
+        if (String(parsedId.type || "").toUpperCase() === "SPGOATID" && parsedId.tag) {
+            const existing = goats.find(g => String(g.tag || "").toLowerCase() === String(parsedId.tag).toLowerCase());
+            if (existing) { closeQrEntry(); openGoatProfile(existing.tag); }
+            else if (message) message.textContent = `No goat with tag ${parsedId.tag} exists in this data.`;
+            return;
+        }
+    } catch (error) {}
 
     let breed = "";
     let gender = "";
@@ -406,45 +443,39 @@ function openQrLibrary() {
     const modal = document.getElementById("qrLibraryModal");
     const grid = document.getElementById("qrCodeGrid");
     if (!modal || !grid) return;
-
     grid.innerHTML = "";
     modal.style.display = "flex";
 
     if (typeof QRCode === "undefined") {
-        grid.innerHTML = '<p>QR generation library did not load. Please check your internet connection.</p>';
+        grid.innerHTML = '<p>QR generation library did not load. Check your internet connection.</p>';
+        return;
+    }
+    if (!goats.length) {
+        grid.innerHTML = '<p>No goats found. Add goats or import your JSON backup first.</p>';
         return;
     }
 
-    GOAT_QR_OPTIONS.forEach(option => {
-        const card = document.createElement("div");
-        card.className = "qr-code-card";
-
-        const title = document.createElement("h3");
-        title.textContent = option.breed;
-
-        const gender = document.createElement("p");
-        gender.className = "qr-code-gender";
-        gender.textContent = option.gender;
-
-        const qrBox = document.createElement("div");
-        qrBox.className = "qr-code-image";
-
-        const payload = document.createElement("code");
-        payload.textContent = option.payload;
-
-        card.appendChild(title);
-        card.appendChild(gender);
-        card.appendChild(qrBox);
-        card.appendChild(payload);
-        grid.appendChild(card);
-
-        new QRCode(qrBox, {
-            text: option.payload,
-            width: 150,
-            height: 150,
-            correctLevel: QRCode.CorrectLevel.M
-        });
+    goats.forEach(goat => {
+        const card = document.createElement("article");
+        card.className = "qr-code-card individual-goat-qr-card";
+        const title = document.createElement("h3"); title.textContent = String(goat.tag || "Unt agged");
+        const details = document.createElement("p"); details.className = "qr-code-gender";
+        details.textContent = `${goat.breed || "Unknown breed"} · ${goat.gender || "Unknown gender"}`;
+        const qrBox = document.createElement("div"); qrBox.className = "qr-code-image";
+        const caption = document.createElement("small"); caption.textContent = `Tag ID: ${goat.tag || "—"}`;
+        card.append(title, details, qrBox, caption); grid.appendChild(card);
+        new QRCode(qrBox, { text: `SPGOATID|${String(goat.tag || "")}`, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M });
     });
+}
+
+function printSingleGoatQr(tag) {
+    const goat = goats.find(g => String(g.tag).toLowerCase() === String(tag).toLowerCase());
+    if (!goat) return alert("Goat not found.");
+    const win = window.open("", "_blank", "width=500,height=600");
+    if (!win) return alert("Allow pop-ups to print the goat tag.");
+    const payload = `SPGOATID|${String(goat.tag || "")}`;
+    win.document.write(`<!doctype html><html><head><title>Goat Tag ${dashboardSafeText(goat.tag)}</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:24px}.label{border:2px solid #111;border-radius:12px;padding:18px;display:inline-block;min-width:230px}h1{font-size:28px;margin:0 0 8px}p{margin:6px 0}#qr{display:flex;justify-content:center;margin:12px}</style></head><body><div class="label"><h1>${dashboardSafeText(goat.tag)}</h1><p>${dashboardSafeText(goat.breed || "")} · ${dashboardSafeText(goat.gender || "")}</p><div id="qr"></div><b>Tag ID: ${dashboardSafeText(goat.tag)}</b></div><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script><script>new QRCode(document.getElementById('qr'),{text:${JSON.stringify(payload)},width:180,height:180});window.onload=()=>setTimeout(()=>window.print(),350);<\/script></body></html>`);
+    win.document.close();
 }
 
 function closeQrLibrary() {
@@ -1616,6 +1647,12 @@ function openGoatProfile(tag) {
     }
 
     activeGoatTag = goat.tag;
+    const qrPanel = document.getElementById("goatProfileQr");
+    if (qrPanel) {
+        qrPanel.innerHTML = `<section class="profile-qr-card"><div><h3><i class="fa-solid fa-qrcode"></i> Goat tag QR</h3><p>Scan this code in SP Goat Farm to open ${dashboardSafeText(goat.tag)}.</p><button type="button" onclick="printSingleGoatQr('${String(goat.tag).replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')"><i class="fa-solid fa-print"></i> Print this tag</button></div><div id="profileGoatQrCode" class="profile-qr-image"></div></section>`;
+        const qrBox = document.getElementById("profileGoatQrCode");
+        if (qrBox && typeof QRCode !== "undefined") new QRCode(qrBox, { text: `SPGOATID|${String(goat.tag || "")}`, width: 132, height: 132, correctLevel: QRCode.CorrectLevel.M });
+    }
     const heading = document.getElementById("goatProfileHeading");
     if (heading) heading.textContent = `🐐 ${goat.tag} — Goat Profile`;
 
@@ -3926,7 +3963,8 @@ function restoreData(event) {
             /* FIX MISSING ARRAYS */
 
             goats.forEach(goat => {
-
+                goat.tag = String(goat.tag || "").trim();
+                if (!goat.tag) goat.tag = getNextGoatTag();
                 if (!goat.vaccinations)
                     goat.vaccinations = [];
 
@@ -3960,8 +3998,9 @@ function restoreData(event) {
             renderDashboardAlerts();
 
             alert(
-                "Backup Restored Successfully!"
+                `Backup imported successfully! ${goats.length} goat records are ready. Individual QR codes are generated from each tag ID.`
             );
+            if (event && event.target) event.target.value = "";
 
         } catch (error) {
 
