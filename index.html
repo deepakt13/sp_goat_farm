@@ -459,11 +459,12 @@
 
 </label>
 
-<input
-    type="file"
-    id="goatImage"
-    accept="image/*"
->
+<div class="goat-photo-actions">
+    <label class="photo-pick-button" for="goatImage"><i class="fa-solid fa-images"></i> Upload from device</label>
+    <input type="file" id="goatImage" accept="image/*" class="photo-file-input">
+    <button type="button" class="photo-pick-button camera" onclick="openGoatCamera('goat')"><i class="fa-solid fa-camera"></i> Take live photo</button>
+</div>
+<p class="photo-compression-note">Photos are automatically compressed toward 5 KB before saving. Review image clarity before adding.</p>
 
 <button onclick="addGoat()">
     Add Goat
@@ -773,7 +774,12 @@
             <label for="qrDob">Birth Date (required)</label>
             <input type="date" id="qrDob">
             <label for="qrGoatImage">Goat Image (optional)</label>
-            <input type="file" id="qrGoatImage" accept="image/*">
+            <div class="goat-photo-actions qr-photo-actions">
+                <label class="photo-pick-button" for="qrGoatImage"><i class="fa-solid fa-images"></i> Upload from device</label>
+                <input type="file" id="qrGoatImage" accept="image/*" class="photo-file-input">
+                <button type="button" class="photo-pick-button camera" onclick="openGoatCamera('qr')"><i class="fa-solid fa-camera"></i> Take live photo</button>
+            </div>
+            <small class="photo-compression-note">Image compressed toward 5 KB before saving.</small>
             <button type="button" class="qr-save-btn" onclick="saveQrGoat()">Save Goat Entry</button>
         </div>
         <p id="qrEntryMessage" class="qr-entry-message" aria-live="polite"></p>
@@ -1118,5 +1124,19 @@
 
 <link rel="stylesheet" href="farm-tools.css">
 <script src="farm-tools.js"></script>
+
+<!-- Live camera capture modal: uses the device camera rather than the file picker. -->
+<div id="goatCameraModal" class="goat-camera-modal" style="display:none" role="dialog" aria-modal="true" aria-label="Take goat photo">
+  <div class="goat-camera-panel">
+    <h3>Take live photo</h3>
+    <video id="goatCameraVideo" autoplay playsinline muted></video>
+    <p id="goatCameraStatus">Allow camera access when prompted.</p>
+    <div class="goat-camera-actions">
+      <button type="button" onclick="captureGoatCameraPhoto()">Capture photo</button>
+      <button type="button" class="secondary-qr-btn" onclick="closeGoatCamera()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
