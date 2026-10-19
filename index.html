@@ -120,73 +120,135 @@
         </div>
 
         <!-- DASHBOARD PAGE -->
-
-        <div id="dashboardPage">
-            <div id="dashboardAlerts"></div>
-            <h2>Dashboard</h2>
-
-            <!-- DASHBOARD CARDS -->
-
-            <div class="dashboard-grid">
-
-                <div class="dashboard-card">
-
-                    <i class="fa-solid fa-cow"></i>
-
-                    <h3>Total Goats</h3>
-
-                    <p id="dashboardGoats">
-                        0
-                    </p>
-
+        <div id="dashboardPage" class="farm-dashboard">
+            <div class="dashboard-welcome">
+                <div>
+                    <p class="dashboard-eyebrow">SP GOAT FARM · FARM OVERVIEW</p>
+                    <h2>Dashboard</h2>
+                    <p id="dashboardToday" class="dashboard-subtitle">Your farm at a glance</p>
                 </div>
-
-                <div class="dashboard-card">
-
-                    <i class="fa-solid fa-money-bill"></i>
-
-                    <h3>Income</h3>
-
-                    <p id="dashboardIncome">
-                        ₹0
-                    </p>
-
-                </div>
-
-                <div class="dashboard-card">
-
-                    <i class="fa-solid fa-wallet"></i>
-
-                    <h3>Expenses</h3>
-
-                    <p id="dashboardExpense">
-                        ₹0
-                    </p>
-
-                </div>
-
-                <div class="dashboard-card">
-
-                    <i class="fa-solid fa-chart-line"></i>
-
-                    <h3>Profit</h3>
-
-                    <p id="dashboardProfit">
-                        ₹0
-                    </p>
-
-                </div>
-
+                <button class="dashboard-refresh" type="button" onclick="refreshFarmDashboard()" aria-label="Refresh dashboard" title="Refresh dashboard">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
             </div>
 
-            <!-- CHART -->
-
-            <div class="chart-card">
-
-                <canvas id="farmChart"></canvas>
-
+            <div class="dashboard-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="dashboardGoatSearch" type="search" placeholder="Find a goat by tag, e.g. SP01" onkeydown="if(event.key==='Enter') dashboardFindGoat()" aria-label="Find goat by tag">
+                <button type="button" onclick="dashboardFindGoat()">Find goat</button>
             </div>
 
+            <div class="dashboard-top-cards">
+                <section class="dashboard-panel dashboard-attention-panel">
+                    <div class="dashboard-panel-heading">
+                        <div><h3><i class="fa-solid fa-bell"></i> Attention needed</h3><p>Vaccination, delivery and recent health follow-ups</p></div>
+                        <span id="dashboardTaskCount" class="dashboard-count-pill">0</span>
+                    </div>
+                    <div id="dashboardAlerts" class="dashboard-alert-list"></div>
+                </section>
+                <section class="dashboard-panel dashboard-herd-panel">
+                    <div class="dashboard-panel-heading">
+                        <div><h3><i class="fa-solid fa-people-group"></i> Herd overview</h3><p id="dashboardHerdSubtitle">Current herd by gender and breed</p></div>
+                        <strong id="dashboardGoats" class="dashboard-herd-total">0</strong>
+                    </div>
+                    <div class="dashboard-gender-counts">
+                        <button type="button" class="dashboard-gender-chip male" onclick="dashboardShowHerd('gender','Male')"><span><i class="fa-solid fa-mars"></i> Male</span><strong id="dashboardMaleCount">0</strong><small>Tap to view tags</small></button>
+                        <button type="button" class="dashboard-gender-chip female" onclick="dashboardShowHerd('gender','Female')"><span><i class="fa-solid fa-venus"></i> Female</span><strong id="dashboardFemaleCount">0</strong><small>Tap to view tags</small></button>
+                    </div>
+                    <div class="dashboard-breed-heading">Breed-wise count <span>Tap a breed</span></div>
+                    <div id="dashboardBreedCounts" class="dashboard-breed-counts"></div>
+                </section>
+            </div>
+
+            <section id="dashboardHerdListPanel" class="dashboard-panel dashboard-herd-list-panel" hidden>
+                <div class="dashboard-panel-heading"><div><h3 id="dashboardHerdListTitle">Goat tags</h3><p>Oldest to youngest by date of birth</p></div><button type="button" class="dashboard-text-button" onclick="dashboardCloseHerdList()">Close</button></div>
+                <div id="dashboardHerdList" class="dashboard-herd-list"></div>
+            </section>
+
+            <div class="dashboard-section-heading dashboard-finance-heading">
+                <h3>Farm finances</h3>
+                <span>Tap a card to open details</span>
+            </div>
+            <div class="dashboard-grid dashboard-grid-interactive dashboard-finance-grid">
+                <button class="dashboard-card" type="button" onclick="dashboardOpenFinance('income')" aria-label="Open income records">
+                    <span class="dashboard-card-icon"><i class="fa-solid fa-money-bill-wave"></i></span>
+                    <span class="dashboard-card-label">Income</span>
+                    <strong id="dashboardIncome">₹0</strong>
+                    <span class="dashboard-card-hint">View income <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                </button>
+                <button class="dashboard-card" type="button" onclick="dashboardOpenFinance('expense')" aria-label="Open expense records">
+                    <span class="dashboard-card-icon"><i class="fa-solid fa-wallet"></i></span>
+                    <span class="dashboard-card-label">Expenses</span>
+                    <strong id="dashboardExpense">₹0</strong>
+                    <span class="dashboard-card-hint">View expenses <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                </button>
+                <button class="dashboard-card profit-card" type="button" onclick="showPage('businessPage')" aria-label="Open business summary">
+                    <span class="dashboard-card-icon"><i class="fa-solid fa-chart-line"></i></span>
+                    <span class="dashboard-card-label">Net balance</span>
+                    <strong id="dashboardProfit">₹0</strong>
+                    <span class="dashboard-card-hint">Business summary <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                </button>
+            </div>
+
+            <div class="dashboard-section-heading dashboard-section-spaced">
+                <h3>Quick actions</h3>
+                <span>Common farm tasks</span>
+            </div>
+            <div class="dashboard-quick-actions">
+                <button type="button" onclick="showPage('goatPage'); setTimeout(openManualEntry, 80)"><span><i class="fa-solid fa-plus"></i></span><b>Add goat</b></button>
+                <button type="button" onclick="dashboardOpenFinance('income')"><span><i class="fa-solid fa-arrow-down-wide-short"></i></span><b>Record income</b></button>
+                <button type="button" onclick="dashboardOpenFinance('expense')"><span><i class="fa-solid fa-arrow-up-wide-short"></i></span><b>Record expense</b></button>
+                <button type="button" onclick="showPage('farmToolsPage'); renderFarmTools()"><span><i class="fa-solid fa-toolbox"></i></span><b>Farm tools</b></button>
+                <button type="button" onclick="showPage('backupPage')"><span><i class="fa-solid fa-shield-halved"></i></span><b>Backup data</b></button>
+            </div>
+
+            <div class="dashboard-insights-grid">
+                <section class="dashboard-panel">
+                    <div class="dashboard-panel-heading">
+                        <div><h3><i class="fa-solid fa-chart-column"></i> Financial overview</h3><p>Totals from all saved entries</p></div>
+                        <button type="button" class="dashboard-text-button" onclick="showPage('businessPage')">Details</button>
+                    </div>
+                    <div class="chart-card dashboard-chart-card"><canvas id="farmChart"></canvas></div>
+                    <div class="dashboard-finance-note"><i class="fa-solid fa-circle-info"></i> Add dates to future transactions to enable monthly trend reports.</div>
+                </section>
+            </div>
+
+            <section class="dashboard-panel dashboard-recent-panel">
+                <div class="dashboard-panel-heading">
+                    <div><h3><i class="fa-solid fa-clock-rotate-left"></i> Recent entries</h3><p>Latest saved income and expense records</p></div>
+                    <button type="button" class="dashboard-text-button" onclick="showPage('businessPage')">View all</button>
+                </div>
+                <div id="dashboardRecentEntries" class="dashboard-recent-list"></div>
+            </section>
+
+            <div class="dashboard-footer-actions">
+                <button type="button" onclick="downloadAllGoats()"><i class="fa-solid fa-file-export"></i> Export goat list</button>
+                <button type="button" onclick="showPage('backupPage')"><i class="fa-solid fa-cloud-arrow-down"></i> Backup & reports</button>
+            </div>
+        </div>
+
+        <!-- HERD DETAILS PAGE: opens separately from the dashboard -->
+        <div id="herdDetailsPage" class="herd-details-page" style="display:none;">
+            <div class="herd-details-topbar">
+                <button type="button" class="herd-back-button" onclick="dashboardBackFromHerdDetails()"><i class="fa-solid fa-arrow-left"></i> Dashboard</button>
+                <button type="button" class="herd-refresh-button" onclick="dashboardRenderHerdDetails()" aria-label="Refresh herd list"><i class="fa-solid fa-rotate"></i></button>
+            </div>
+            <section class="herd-details-hero">
+                <p class="dashboard-eyebrow">SP GOAT FARM · HERD RECORDS</p>
+                <h2 id="herdDetailsTitle">Goat group</h2>
+                <p id="herdDetailsSubtitle">Goats sorted from oldest to youngest</p>
+                <div class="herd-details-summary">
+                    <div><span>Matching goats</span><strong id="herdDetailsCount">0</strong></div>
+                    <div><span>Oldest recorded age</span><strong id="herdDetailsOldest">—</strong></div>
+                </div>
+            </section>
+            <div class="herd-details-actions">
+                <label class="herd-details-search"><i class="fa-solid fa-magnifying-glass"></i><input id="herdDetailsSearch" type="search" placeholder="Search tag or breed" oninput="dashboardRenderHerdDetails()" aria-label="Search goats in this group"></label>
+                <button type="button" onclick="dashboardExportHerdDetails()"><i class="fa-solid fa-file-csv"></i> Export list</button>
+                <button type="button" class="primary" onclick="showPage('goatPage')"><i class="fa-solid fa-plus"></i> Add goat</button>
+            </div>
+            <div class="herd-details-sort-note"><i class="fa-solid fa-arrow-down-wide-short"></i> Sorted by date of birth: oldest first. Goats without DOB appear last.</div>
+            <div id="herdDetailsList" class="herd-details-list"></div>
         </div>
 
         <!-- GOAT PAGE -->
@@ -546,6 +608,88 @@
                 onchange="restoreData(event)"
             >
 
+        </div>
+
+        <!-- FARM TOOLS PAGE: add-on modules using separate storage keys -->
+        <div id="farmToolsPage" style="display:none;" class="farm-tools-page">
+            <div class="farm-tools-header">
+                <button type="button" class="farm-tools-back" onclick="showPage('dashboardPage')">← Dashboard</button>
+                <h2>Farm Tools</h2>
+                <p>Daily farm operations, inventory and reports</p>
+            </div>
+            <div class="farm-tools-tabs" role="tablist">
+                <button type="button" class="active" data-tool-tab="overview" onclick="openFarmToolTab('overview',this)">Overview</button>
+                <button type="button" data-tool-tab="feed" onclick="openFarmToolTab('feed',this)">Feed</button>
+                <button type="button" data-tool-tab="medicine" onclick="openFarmToolTab('medicine',this)">Medicine</button>
+                <button type="button" data-tool-tab="buyers" onclick="openFarmToolTab('buyers',this)">Buyers</button>
+                <button type="button" data-tool-tab="reports" onclick="openFarmToolTab('reports',this)">Reports</button>
+            </div>
+            <section class="farm-tool-panel" id="farmTool-overview">
+                <div class="farm-tool-stat-grid">
+                    <article class="farm-tool-stat"><span>Active goats</span><strong id="ftActiveGoats">0</strong></article>
+                    <article class="farm-tool-stat"><span>Weight entries</span><strong id="ftWeightEntries">0</strong></article>
+                    <article class="farm-tool-stat"><span>Feed expenses</span><strong id="ftFeedExpense">₹0</strong></article>
+                    <article class="farm-tool-stat"><span>Medicine stock items</span><strong id="ftMedicineItems">0</strong></article>
+                </div>
+                <h3>Growth and herd checks</h3><div id="ftPerformance" class="farm-tool-results"></div>
+                <h3>Data quality checks</h3><div id="ftDataChecks" class="farm-tool-results"></div>
+                <h3>Recent activity</h3><div id="ftActivityList" class="farm-tool-results"></div>
+            </section>
+            <section class="farm-tool-panel" id="farmTool-feed" style="display:none">
+                <h3>Record feed purchase or use</h3>
+                <form id="ftFeedForm" class="farm-tool-form">
+                    <label>Type<select id="ftFeedType"><option value="Purchase">Purchase</option><option value="Usage">Daily usage</option></select></label>
+                    <label>Feed name<input id="ftFeedName" required placeholder="e.g. Green fodder, concentrate"></label>
+                    <label>Quantity<input id="ftFeedQty" type="number" min="0.01" step="any" required></label>
+                    <label>Unit<select id="ftFeedUnit"><option>kg</option><option>quintal</option><option>bag</option><option>bundle</option><option>litre</option></select></label>
+                    <label>Cost (₹)<input id="ftFeedCost" type="number" min="0" step="0.01" value="0" required></label>
+                    <label>Date<input id="ftFeedDate" type="date" required></label>
+                    <label>Notes<input id="ftFeedNotes" placeholder="Optional"></label>
+                    <button type="submit">Save feed record</button>
+                </form>
+                <div class="farm-tool-inline"><label>Filter by feed<input id="ftFeedFilter" placeholder="Search feed..." oninput="renderFeedRecords()"></label><button type="button" onclick="exportFarmToolCSV('feed')">Export CSV</button></div>
+                <div id="ftFeedList" class="farm-tool-results"></div>
+            </section>
+            <section class="farm-tool-panel" id="farmTool-medicine" style="display:none">
+                <h3>Medicine and vaccine inventory</h3>
+                <form id="ftMedicineForm" class="farm-tool-form">
+                    <label>Item name<input id="ftMedName" required placeholder="Medicine / vaccine name"></label>
+                    <label>Quantity<input id="ftMedQty" type="number" min="0" step="any" required></label>
+                    <label>Unit<input id="ftMedUnit" required value="dose" placeholder="dose, bottle, ml"></label>
+                    <label>Low-stock threshold<input id="ftMedLow" type="number" min="0" step="any" value="1" required></label>
+                    <label>Expiry date<input id="ftMedExpiry" type="date"></label>
+                    <label>Purchase cost (₹)<input id="ftMedCost" type="number" min="0" step="0.01" value="0"></label>
+                    <label>Storage / notes<input id="ftMedNotes" placeholder="Optional"></label>
+                    <button type="submit">Add inventory item</button>
+                </form>
+                <div id="ftMedicineList" class="farm-tool-results"></div>
+                <p class="farm-tool-note">Inventory is a tracking aid, not a treatment recommendation. Follow the product label and veterinarian's instructions for storage, dosage and expiry.</p>
+            </section>
+            <section class="farm-tool-panel" id="farmTool-buyers" style="display:none">
+                <h3>Buyer and customer directory</h3>
+                <form id="ftBuyerForm" class="farm-tool-form">
+                    <label>Name<input id="ftBuyerName" required></label>
+                    <label>Phone<input id="ftBuyerPhone" inputmode="tel" placeholder="Optional"></label>
+                    <label>Village / location<input id="ftBuyerLocation" placeholder="Optional"></label>
+                    <label>Notes<input id="ftBuyerNotes" placeholder="Preferred breed, payment notes..."></label>
+                    <button type="submit">Save buyer</button>
+                </form>
+                <div class="farm-tool-inline"><label>Search buyers<input id="ftBuyerFilter" placeholder="Name or phone" oninput="renderBuyerRecords()"></label><button type="button" onclick="exportFarmToolCSV('buyers')">Export CSV</button></div>
+                <div id="ftBuyerList" class="farm-tool-results"></div>
+            </section>
+            <section class="farm-tool-panel" id="farmTool-reports" style="display:none">
+                <h3>Farm reports</h3>
+                <p>Reports use the records currently saved in this browser. Review the figures before printing or sharing.</p>
+                <div class="farm-tool-report-actions">
+                    <button type="button" onclick="printFarmSummary()">Print farm summary</button>
+                    <button type="button" onclick="exportFarmToolCSV('goats')">Export goat register CSV</button>
+                    <button type="button" onclick="exportFarmToolCSV('feed')">Export feed CSV</button>
+                    <button type="button" onclick="exportFarmToolCSV('buyers')">Export buyer CSV</button>
+                    <button type="button" onclick="exportFarmToolsBackup()">Export Farm Tools backup</button>
+                    <label class="farm-tool-file">Import Farm Tools backup<input type="file" accept="application/json,.json" onchange="importFarmToolsBackup(event)"></label>
+                </div>
+                <div id="ftReportPreview" class="farm-tool-results"></div>
+            </section>
         </div>
 
         <!-- FLOATING BUTTON -->
@@ -971,5 +1115,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<link rel="stylesheet" href="farm-tools.css">
+<script src="farm-tools.js"></script>
 </body>
 </html>
