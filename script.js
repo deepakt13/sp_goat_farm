@@ -15,6 +15,143 @@ let editIndex = -1;
 let farmChart = null;
 
 
+/* PHOTO COMPRESSION + CAMERA/GALLERY INPUTS
+   Compresses to a target of ~5 KB when practical. The target is not guaranteed
+   for every image; a tiny image can lose identifying detail. */
+const GOAT_PHOTO_TARGET_BYTES = 5 * 1024;
+let goatCameraStream = null;
+let goatCameraPurpose = "goat";
+const capturedGoatPhotos = { goat: null, qr: null };
+
+function compressGoatPhoto(file, targetBytes = GOAT_PHOTO_TARGET_BYTES) {
+    return new Promise((resolve, reject) => {
+        if (!file) return resolve("");
+        if (!file.type || !file.type.startsWith("image/")) {
+            reject(new Error("Please select a valid image file."));
+            return;
+        }
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Could not read the selected image."));
+        reader.onload = () => {
+            const img = new Image();
+            img.onerror = () => reject(new Error("Could not process this image. Please try another photo."));
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement("canvas");
+                    let maxDimension = 640;
+                    const scale = Math.min(1, maxDimension / Math.max(img.naturalWidth, img.naturalHeight));
+                    let width = Math.max(1, Math.round(img.naturalWidth * scale));
+                    let height = Math.max(1, Math.round(img.naturalHeight * scale));
+                    let best = "";
+                    // Reduce dimensions progressively and test JPEG quality until target is reached.
+                    for (let dimensionPass = 0; dimensionPass < 7; dimensionPass++) {
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext("2d", { alpha: false });
+                        ctx.fillStyle = "#ffffff";
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        for (const quality of [0.72, 0.58, 0.45, 0.32, 0.22, 0.14, 0.08]) {
+                            const dataUrl = canvas.toDataURL("image/jpeg", quality);
+                            const bytes = Math.ceil((dataUrl.length - dataUrl.indexOf(",") - 1) * 3 / 4);
+                            if (!best || dataUrl.length < best.length) best = dataUrl;
+                            if (bytes <= targetBytes) {
+                                resolve(dataUrl);
+                                return;
+                            }
+                        }
+                        width = Math.max(48, Math.round(width * 0.78));
+                        height = Math.max(48, Math.round(height * 0.78));
+                    }
+                    // If 5 KB is impossible, save the smallest result produced and disclose via console.
+                    console.warn("Goat photo could not reach 5 KB without further severe quality loss; saving the smallest compressed version.");
+                    resolve(best);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function getSelectedGoatPhotoFile(primaryId, cameraId) {
+    const purpose = primaryId === "qrGoatImage" ? "qr" : "goat";
+    if (capturedGoatPhotos[purpose]) return { file: capturedGoatPhotos[purpose], input: null };
+    const camera = document.getElementById(cameraId);
+    const gallery = document.getElementById(primaryId);
+    // Prefer whichever input has a selected file; camera input is checked first.
+    if (camera && camera.files && camera.files[0]) return { file: camera.files[0], input: camera };
+    if (gallery && gallery.files && gallery.files[0]) return { file: gallery.files[0], input: gallery };
+    return { file: null, input: null };
+}
+
+function clearGoatPhotoInputs() {
+    capturedGoatPhotos.goat = null; capturedGoatPhotos.qr = null;
+    ["goatImage", "qrGoatImage"].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.value = "";
+    });
+}
+
+["goatImage", "qrGoatImage"].forEach(id => {
+    document.addEventListener("change", event => {
+        if (event.target && event.target.id === id && event.target.files && event.target.files[0]) {
+            const file = event.target.files[0];
+            if (event.target.id === "goatImage") capturedGoatPhotos.goat = null;
+            if (event.target.id === "qrGoatImage") capturedGoatPhotos.qr = null;
+            const sizeKB = (file.size / 1024).toFixed(1);
+            console.info("Selected goat photo:", sizeKB + " KB; will be compressed before saving.");
+        }
+    });
+});
+
+/* True live-camera capture. Requires HTTPS or localhost and camera permission. */
+async function openGoatCamera(purpose = "goat") {
+    goatCameraPurpose = purpose;
+    const modal = document.getElementById("goatCameraModal");
+    const video = document.getElementById("goatCameraVideo");
+    const status = document.getElementById("goatCameraStatus");
+    modal.style.display = "flex";
+    status.textContent = "Starting camera…";
+    try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error("Live camera requires HTTPS or localhost in a supported browser. Open the app using its secure website address.");
+        }
+        goatCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+        video.srcObject = goatCameraStream;
+        await video.play();
+        status.textContent = "Camera ready. Position the goat and tap Capture photo.";
+    } catch (err) {
+        status.textContent = err.message || "Could not access the camera. Check browser permissions.";
+    }
+}
+function closeGoatCamera() {
+    const modal = document.getElementById("goatCameraModal");
+    const video = document.getElementById("goatCameraVideo");
+    if (goatCameraStream) goatCameraStream.getTracks().forEach(track => track.stop());
+    goatCameraStream = null;
+    if (video) video.srcObject = null;
+    if (modal) modal.style.display = "none";
+}
+function captureGoatCameraPhoto() {
+    const video = document.getElementById("goatCameraVideo");
+    const status = document.getElementById("goatCameraStatus");
+    if (!video || !video.videoWidth || !video.videoHeight) { status.textContent = "Camera is not ready yet. Allow permission and wait for the preview."; return; }
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(blob => {
+        if (!blob) { status.textContent = "Could not capture photo. Please try again."; return; }
+        capturedGoatPhotos[goatCameraPurpose] = new File([blob], "goat-camera-photo.jpg", { type: "image/jpeg" });
+        const inputId = goatCameraPurpose === "qr" ? "qrGoatImage" : "goatImage";
+        const input = document.getElementById(inputId); if (input) input.value = "";
+        closeGoatCamera();
+        alert("Live photo captured. It will be compressed before saving.");
+    }, "image/jpeg", 0.92);
+}
+
 /* =========================================================
    QR-BASED GOAT ENTRY
    QR payload format: SPGOAT|Breed|Gender
@@ -80,8 +217,10 @@ function openQrEntry() {
     const dob = document.getElementById("qrDob");
     if (dob) dob.value = "";
 
-    const image = document.getElementById("qrGoatImage");
-    if (image) image.value = "";
+    ["qrGoatImage", "qrGoatCameraImage"].forEach(id => {
+        const image = document.getElementById(id);
+        if (image) image.value = "";
+    });
 
     activeQrGoatDetails = null;
     const details = document.getElementById("qrDetectedDetails");
@@ -214,8 +353,8 @@ function saveQrGoat() {
     const tag = getNextGoatTag();
     const breed = activeQrGoatDetails.breed;
     const gender = activeQrGoatDetails.gender;
-    const imageInput = document.getElementById("qrGoatImage");
-    const file = imageInput && imageInput.files ? imageInput.files[0] : null;
+    const selectedPhoto = getSelectedGoatPhotoFile("qrGoatImage", "qrGoatCameraImage");
+    const file = selectedPhoto.file;
 
     // Guard against accidental duplicate tag if records changed during the modal.
     if (goats.some(goat => String(goat.tag || "").toLowerCase() === tag.toLowerCase())) {
@@ -255,10 +394,9 @@ function saveQrGoat() {
     };
 
     if (file) {
-        const reader = new FileReader();
-        reader.onload = event => finishSave(event.target.result);
-        reader.onerror = () => alert("Could not read the selected image. Please try again.");
-        reader.readAsDataURL(file);
+        compressGoatPhoto(file).then(finishSave).catch(error => {
+            alert(error.message || "Could not process the selected image.");
+        });
     } else {
         finishSave("");
     }
@@ -1535,10 +1673,7 @@ function addGoat() {
             "dob"
         ).value;
 
-    const imageInput =
-        document.getElementById(
-            "goatImage"
-        );
+    const selectedPhoto = getSelectedGoatPhotoFile("goatImage", "goatCameraImage");
 
     /* VALIDATION */
 
@@ -1569,51 +1704,17 @@ function addGoat() {
         return;
     }
 
-    const file =
-        imageInput.files[0];
+    const file = selectedPhoto.file;
 
-    /* IMAGE */
-
+    /* Compress either camera capture or gallery photo before localStorage save. */
     if (file) {
-
-        const reader =
-            new FileReader();
-
-        reader.onload =
-            function(e) {
-
-                saveGoat(
-
-                    tag,
-
-                    breed,
-
-                    gender,
-
-                    dob,
-
-                    e.target.result
-                );
-            };
-
-        reader.readAsDataURL(file);
-
-    }
-
-    else {
-
-        saveGoat(
-
-            tag,
-
-            breed,
-
-            gender,
-
-            dob,
-
-            ""
-        );
+        compressGoatPhoto(file).then(imageData => {
+            saveGoat(tag, breed, gender, dob, imageData);
+        }).catch(error => {
+            alert(error.message || "Could not process the selected image.");
+        });
+    } else {
+        saveGoat(tag, breed, gender, dob, "");
     }
 }
 /* SAVE GOAT */
@@ -2313,9 +2414,7 @@ function clearForm() {
     document.getElementById("dob")
         .value = "";
 
-    document.getElementById(
-        "goatImage"
-    ).value = "";
+    clearGoatPhotoInputs();
 }
 
 /* SALE MODAL */
