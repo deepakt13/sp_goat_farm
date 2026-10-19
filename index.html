@@ -1146,5 +1146,15 @@
   </div>
 </div>
 
+<script>
+// Register the service worker using a path that works on GitHub Pages project sites.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js', { scope: './' })
+      .catch(error => console.error('Service worker registration failed:', error));
+  });
+}
+</script>
+
 </body>
 </html>
