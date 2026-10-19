@@ -4,6 +4,7 @@ let goats =
     JSON.parse(localStorage.getItem("goats")) || [];
 let currentFilteredGoats = goats;
 let activeGoatTag = null;
+let goatProfileReturnPage = "goatPage";
 let expenses =
     JSON.parse(localStorage.getItem("expenses")) || [];
 
@@ -522,6 +523,9 @@ function showPage(pageId) {
     document.getElementById("goatPage")
         .style.display = "none";
 
+    const allGoatsPage = document.getElementById("allGoatsPage");
+    if (allGoatsPage) allGoatsPage.style.display = "none";
+
     document.getElementById("businessPage")
         .style.display = "none";
 
@@ -546,6 +550,14 @@ function showPage(pageId) {
     if (pageId === "goatPage") {
         activeGoatTag = null;
         renderGoats(currentFilteredGoats || goats);
+    }
+
+    if (pageId === "allGoatsPage") {
+        activeGoatTag = null;
+        const searchInput = document.getElementById("allGoatsSearch");
+        if (searchInput) searchInput.value = "";
+        renderAllGoatsCount(goats.length);
+        renderGoats(goats);
     }
 
     if (pageId === "dashboardPage") {
@@ -686,14 +698,25 @@ function refreshFarmDashboard() {
 function dashboardFindGoat() {
     const input = document.getElementById("dashboardGoatSearch");
     const query = input ? input.value.trim() : "";
+
+    // Open the goat management page, apply the query, then land at the
+    // Total Goats/search-results section rather than the top of the form.
     showPage("goatPage");
     const search = document.getElementById("searchBox");
     if (search) {
         search.value = query;
         if (typeof searchGoats === "function") searchGoats();
-        search.focus({ preventScroll: true });
     }
-    if (!query && search) search.focus();
+
+    const scrollToResults = () => {
+        const target = document.getElementById("totalGoats");
+        if (!target) return;
+        const top = target.getBoundingClientRect().top + window.pageYOffset - 12;
+        window.scrollTo({ top: Math.max(0, top), behavior: "auto" });
+    };
+
+    // Wait for page visibility/layout to update before measuring the target.
+    requestAnimationFrame(() => requestAnimationFrame(scrollToResults));
 }
 
 function dashboardOpenFinance(type) {
@@ -1014,14 +1037,17 @@ function renderGoats(filteredGoats = goats) {
         );
     }
 
+    const allGoatsPage = document.getElementById("allGoatsPage");
+    const showingAllGoats = !activeGoatTag && allGoatsPage && allGoatsPage.style.display !== "none";
     const goatList = document.getElementById(
-        activeGoatTag ? "goatProfileContent" : "goatList"
+        activeGoatTag ? "goatProfileContent" : (showingAllGoats ? "allGoatsList" : "goatList")
     );
 
     const totalGoats = document.getElementById("totalGoats");
     if (!goatList) return;
 
     goatList.innerHTML = "";
+    if (showingAllGoats) renderAllGoatsCount(filteredGoats.length);
 
     if (totalGoats) {
         totalGoats.innerText = `Total Goats: ${goats.length}`;
@@ -1029,6 +1055,12 @@ function renderGoats(filteredGoats = goats) {
 
     if (activeGoatTag && filteredGoats.length === 0) {
         goatList.innerHTML = '<div class="empty-goat-state">Goat not found. <button onclick="backToGoatSearch()">Back to search</button></div>';
+        return;
+    }
+
+    if (showingAllGoats && filteredGoats.length === 0) {
+        const hasAnyGoats = Array.isArray(goats) && goats.length > 0;
+        goatList.innerHTML = `<div class="empty-goat-state">${hasAnyGoats ? "No goats match your search." : "No goat records yet. Add a goat to see it here."}</div>`;
         return;
     }
 
@@ -1068,7 +1100,7 @@ function renderGoats(filteredGoats = goats) {
                         <span>${safeBreed} · ${safeGender}</span>
                         <small>DOB: ${String(goat.dob || "—")}</small>
                     </span>
-                    <span class="goat-summary-age">${calculateAge(goat.dob)}</span>
+                    <span class="goat-summary-age">${goat.dob ? calculateAge(goat.dob) : "Age unavailable"}</span>
                     <i class="fa-solid fa-chevron-right goat-summary-chevron"></i>
                 </button>
             `;
@@ -1636,6 +1668,29 @@ function renderGoats(filteredGoats = goats) {
     });
 }
 
+/* ALL GOATS PAGE */
+function openAllGoatsPage() {
+    showPage("allGoatsPage");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderAllGoatsCount(count) {
+    const label = document.getElementById("allGoatsCount");
+    if (label) label.textContent = `${count} goat${count === 1 ? "" : "s"} in your farm`;
+}
+
+function filterAllGoatsList() {
+    const input = document.getElementById("allGoatsSearch");
+    const query = input ? input.value.trim().toLowerCase() : "";
+    const filtered = (Array.isArray(goats) ? goats : []).filter(goat => {
+        const haystack = [goat.tag, goat.breed, goat.gender, goat.dob, goat.status]
+            .map(value => String(value || "").toLowerCase()).join(" ");
+        return haystack.includes(query);
+    });
+    renderAllGoatsCount(filtered.length);
+    renderGoats(filtered);
+}
+
 /* OPEN A SINGLE GOAT PROFILE */
 function openGoatProfile(tag) {
     const goat = goats.find(
@@ -1647,6 +1702,8 @@ function openGoatProfile(tag) {
         return;
     }
 
+    const allGoatsPage = document.getElementById("allGoatsPage");
+    goatProfileReturnPage = allGoatsPage && allGoatsPage.style.display !== "none" ? "allGoatsPage" : "goatPage";
     activeGoatTag = goat.tag;
     const qrPanel = document.getElementById("goatProfileQr");
     if (qrPanel) {
@@ -1665,8 +1722,10 @@ function openGoatProfile(tag) {
 /* RETURN TO SEARCH / MANAGEMENT PAGE */
 function backToGoatSearch() {
     activeGoatTag = null;
-    showPage("goatPage");
-    renderGoats(currentFilteredGoats || goats);
+    const returnPage = goatProfileReturnPage === "allGoatsPage" ? "allGoatsPage" : "goatPage";
+    showPage(returnPage);
+    if (returnPage === "allGoatsPage") filterAllGoatsList();
+    else renderGoats(currentFilteredGoats || goats);
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1843,8 +1902,19 @@ function editGoat(index) {
 
     editIndex = index;
 
-    /* The edit form lives on the management page. */
+    // Clearly indicate edit mode and bring the form (not the results list) into view.
+    const saveButton = document.getElementById("saveGoatButton");
+    if (saveButton) saveButton.textContent = "Submit";
+
     showPage("goatPage");
+
+    // Wait until the goat page is visible before scrolling to the edit form.
+    window.setTimeout(() => {
+        const form = document.getElementById("manualGoatForm");
+        if (form) form.scrollIntoView({ behavior: "smooth", block: "start" });
+        const tagInput = document.getElementById("tag");
+        if (tagInput) tagInput.focus({ preventScroll: true });
+    }, 80);
 }
 
 /* DELETE */
@@ -2439,6 +2509,9 @@ function closeBirthModal() {
 /* CLEAR */
 
 function clearForm() {
+
+    const saveButton = document.getElementById("saveGoatButton");
+    if (saveButton) saveButton.textContent = "Add Goat";
 
     document.getElementById("tag")
         .value = "";
