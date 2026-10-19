@@ -361,8 +361,17 @@ function showPage(pageId) {
     const profilePage = document.getElementById("goatProfilePage");
     if (profilePage) profilePage.style.display = "none";
 
-    document.getElementById(pageId)
-        .style.display = "block";
+    const farmToolsPage = document.getElementById("farmToolsPage");
+    if (farmToolsPage) farmToolsPage.style.display = "none";
+    const herdDetailsPage = document.getElementById("herdDetailsPage");
+    if (herdDetailsPage) herdDetailsPage.style.display = "none";
+
+    const requestedPage = document.getElementById(pageId);
+    if (!requestedPage) {
+        console.warn("Unknown app page:", pageId);
+        return;
+    }
+    requestedPage.style.display = "block";
 
     if (pageId === "goatPage") {
         activeGoatTag = null;
@@ -370,8 +379,12 @@ function showPage(pageId) {
     }
 
     if (pageId === "dashboardPage") {
-
         updateDashboard();
+    }
+
+    if (pageId === "businessPage") {
+        if (typeof renderExpenses === "function") renderExpenses();
+        if (typeof renderIncome === "function") renderIncome();
     }
 }
 
@@ -408,9 +421,7 @@ function saveData() {
 
 function updateDashboard() {
 
-    document.getElementById(
-        "dashboardGoats"
-    ).innerText = goats.length;
+    renderDashboardHerdOverview();
 
     let totalExpense = 0;
 
@@ -447,181 +458,282 @@ function updateDashboard() {
         profit
     );
     renderDashboardAlerts();
+    renderDashboardExtras();
 }
 
-function renderDashboardAlerts() {
+function renderDashboardExtras() {
+    const todayEl = document.getElementById("dashboardToday");
+    if (todayEl) {
+        todayEl.textContent = new Date().toLocaleDateString(undefined, {
+            weekday: "long", day: "numeric", month: "long", year: "numeric"
+        });
+    }
 
-    const alertsContainer =
-        document.getElementById(
-            "dashboardAlerts"
-        );
+    const taskCount = document.getElementById("dashboardTaskCount");
+    const alerts = document.getElementById("dashboardAlerts");
+    if (taskCount) {
+        const count = alerts ? alerts.querySelectorAll(".dashboard-alert-item").length : 0;
+        taskCount.textContent = String(count);
+        taskCount.classList.toggle("has-tasks", count > 0);
+    }
 
-    alertsContainer.innerHTML = "";
-
-    const today =
-        new Date();
-
-    goats.forEach(goat => {
-
-        /* VACCINATION ALERT */
-/* VACCINATION ALERT */
-
-if (
-    goat.vaccinations &&
-    goat.vaccinations.length > 0
-) {
-
-    const lastVaccine =
-        goat.vaccinations[
-            goat.vaccinations.length - 1
-        ];
-
-    if (lastVaccine.date) {
-
-        const today =
-            new Date();
-
-        const vaccineDate =
-            new Date(lastVaccine.date);
-
-        /* NEXT VACCINE AFTER 6 MONTHS */
-
-        const nextVaccine =
-            new Date(vaccineDate);
-
-        nextVaccine.setDate(
-            nextVaccine.getDate() + 180
-        );
-
-        const timeDifference =
-            nextVaccine.getTime()
-            -
-            today.getTime();
-
-        const diffDays =
-            Math.ceil(
-                timeDifference
-                /
-                (1000 * 60 * 60 * 24)
-            );
-
-        console.log(
-            goat.tag,
-            "Vaccine Days:",
-            diffDays
-        );
-
-        if (
-            diffDays >= 0
-            &&
-            diffDays <= 30
-        ) {
-
-            alertsContainer.innerHTML += `
-
-                <div style="
-                    background:#fef3c7;
-                    padding:14px;
-                    border-radius:12px;
-                    margin-bottom:10px;
-                    font-weight:bold;
-                ">
-
-                    🔔 Goat
-                    ${goat.tag}
-
-                    vaccine due in
-                    ${diffDays} days
-
-                </div>
-            `;
-        }
-
-        /* OVERDUE */
-
-        if (diffDays < 0) {
-
-            alertsContainer.innerHTML += `
-
-                <div style="
-                    background:#fecaca;
-                    padding:14px;
-                    border-radius:12px;
-                    margin-bottom:10px;
-                    font-weight:bold;
-                ">
-
-                    ⚠ Goat
-                    ${goat.tag}
-
-                    vaccine overdue
-
-                </div>
-            `;
+    const recent = document.getElementById("dashboardRecentEntries");
+    if (recent) {
+        const entries = [];
+        (Array.isArray(incomes) ? incomes : []).slice(-3).reverse().forEach(item => {
+            entries.push({ kind: "Income", title: item.title || "Income entry", amount: Number(item.amount) || 0, icon: "fa-arrow-down", tone: "income" });
+        });
+        (Array.isArray(expenses) ? expenses : []).slice(-3).reverse().forEach(item => {
+            entries.push({ kind: "Expense", title: item.title || "Expense entry", amount: Number(item.amount) || 0, icon: "fa-arrow-up", tone: "expense" });
+        });
+        const escapeHTML = value => String(value).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch]));
+        if (!entries.length) {
+            recent.innerHTML = '<div class="dashboard-empty"><i class="fa-regular fa-clipboard"></i><b>No financial entries yet</b><span>Use Record income or Record expense to start tracking your farm.</span></div>';
+        } else {
+            recent.innerHTML = entries.slice(0, 5).map(entry => `
+                <div class="dashboard-recent-item">
+                    <span class="dashboard-recent-icon ${entry.tone}"><i class="fa-solid ${entry.icon}"></i></span>
+                    <span class="dashboard-recent-copy"><b>${escapeHTML(entry.title)}</b><small>${entry.kind}</small></span>
+                    <strong class="${entry.tone}">${entry.tone === "income" ? "+" : "−"}${formatFarmCurrency(entry.amount)}</strong>
+                </div>`).join("");
         }
     }
 }
-        /* DELIVERY ALERT */
 
-        if (
-            goat.breedingRecords &&
-            goat.breedingRecords.length > 0
-        ) {
+function formatFarmCurrency(amount) {
+    return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Number(amount) || 0);
+}
 
-            const lastBreeding =
-                goat.breedingRecords[
-                    goat.breedingRecords.length - 1
-                ];
+function refreshFarmDashboard() {
+    updateDashboard();
+    const button = document.querySelector(".dashboard-refresh i");
+    if (button) {
+        button.classList.add("fa-spin");
+        setTimeout(() => button.classList.remove("fa-spin"), 600);
+    }
+}
 
-            if (
-                lastBreeding.pregnancyStatus
-                    .toLowerCase() === "yes"
-                &&
-                lastBreeding.givenBirth
-                    .toLowerCase() === "no"
-            ) {
+function dashboardFindGoat() {
+    const input = document.getElementById("dashboardGoatSearch");
+    const query = input ? input.value.trim() : "";
+    showPage("goatPage");
+    const search = document.getElementById("searchBox");
+    if (search) {
+        search.value = query;
+        if (typeof searchGoats === "function") searchGoats();
+        search.focus({ preventScroll: true });
+    }
+    if (!query && search) search.focus();
+}
 
-                const deliveryDate =
-                    new Date(
-                        lastBreeding.deliveryDate
-                    );
+function dashboardOpenFinance(type) {
+    showPage("businessPage");
+    const targetId = type === "income" ? "incomeTitle" : "expenseTitle";
+    const target = document.getElementById(targetId);
+    if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => target.focus({ preventScroll: true }), 180);
+    }
+}
 
-                const diffDelivery =
-                    Math.ceil(
-                        (deliveryDate - today)
-                        /
-                        (1000 * 60 * 60 * 24)
-                    );
+function dashboardSafeText(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
 
-                if (
-                    diffDelivery >= 0
-                    &&
-                    diffDelivery <= 15
-                ) {
+function dashboardParseDate(value) {
+    if (!value) return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+    const raw = String(value).trim();
+    let date;
+    if (/^\d{2}-\d{2}-\d{4}$/.test(raw)) {
+        const [dd, mm, yyyy] = raw.split("-").map(Number);
+        date = new Date(yyyy, mm - 1, dd);
+    } else {
+        date = new Date(raw.length === 10 ? raw + "T00:00:00" : raw);
+    }
+    return Number.isNaN(date.getTime()) ? null : date;
+}
 
-                    alertsContainer.innerHTML += `
+function dashboardDaysFromToday(date) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const target = new Date(date); target.setHours(0,0,0,0);
+    return Math.round((target - today) / 86400000);
+}
 
-                        <div style="
-                            background:#dcfce7;
-                            padding:14px;
-                            border-radius:12px;
-                            margin-bottom:10px;
-                            font-weight:bold;
-                        ">
-
-                            🐐 Goat
-                            ${goat.tag}
-
-                            delivery expected in
-                            ${diffDelivery} days
-
-                        </div>
-                    `;
-                }
-            }
-        }
+function dashboardActiveGoats() {
+    return (Array.isArray(goats) ? goats : []).filter(g => {
+        const status = String(g.status || "Active").toLowerCase();
+        return status !== "died" && status !== "sold";
     });
 }
+
+function dashboardRenderAlert(goat, kind, message, severity, icon) {
+    const tag = dashboardSafeText(goat.tag || "Unt tagged");
+    const tagArg = JSON.stringify(String(goat.tag || "")).replace(/</g, "\\u003c");
+    return `<button type="button" class="dashboard-alert-item ${severity}" onclick='openGoatProfile(${tagArg})'>
+        <span class="dashboard-alert-icon"><i class="fa-solid ${icon}"></i></span>
+        <span class="dashboard-alert-copy"><strong>${tag} · ${kind}</strong><small>${dashboardSafeText(message)}</small></span>
+        <i class="fa-solid fa-chevron-right dashboard-alert-chevron"></i>
+    </button>`;
+}
+
+function renderDashboardAlerts() {
+    const container = document.getElementById("dashboardAlerts");
+    if (!container) return;
+    const alerts = [];
+    const today = new Date(); today.setHours(0,0,0,0);
+    dashboardActiveGoats().forEach(goat => {
+        // Vaccine schedule: next due date is estimated as 180 days after latest recorded vaccination.
+        const vaccines = Array.isArray(goat.vaccinations) ? goat.vaccinations : [];
+        const lastVaccine = vaccines.filter(v => v && v.date).map(v => ({...v, _date: dashboardParseDate(v.date)})).filter(v => v._date).sort((a,b)=>b._date-a._date)[0];
+        if (lastVaccine) {
+            const due = new Date(lastVaccine._date); due.setDate(due.getDate()+180);
+            const days = dashboardDaysFromToday(due);
+            if (days < 0) alerts.push({goat, priority:0, html:dashboardRenderAlert(goat,"Vaccination",`Estimated overdue by ${Math.abs(days)} day(s)`,"urgent","fa-syringe")});
+            else if (days <= 30) alerts.push({goat, priority:days<=7?1:2, html:dashboardRenderAlert(goat,"Vaccination",days===0?"Estimated due today":`Estimated due in ${days} day(s)`,days<=7?"soon":"upcoming","fa-syringe")});
+        }
+        const breedings = Array.isArray(goat.breedingRecords) ? goat.breedingRecords : [];
+        const breeding = breedings.slice().reverse().find(b => b && b.deliveryDate && String(b.pregnancyStatus || "").toLowerCase()==="yes" && String(b.givenBirth || "no").toLowerCase()==="no");
+        if (breeding) {
+            const delivery = dashboardParseDate(breeding.deliveryDate);
+            if (delivery) {
+                const days = dashboardDaysFromToday(delivery);
+                if (days < 0) alerts.push({goat, priority:0, html:dashboardRenderAlert(goat,"Delivery",`Expected date passed by ${Math.abs(days)} day(s) — confirm outcome`,"urgent","fa-calendar-day")});
+                else if (days <= 15) alerts.push({goat, priority:days<=3?1:2, html:dashboardRenderAlert(goat,"Delivery",days===0?"Expected today":`Expected in ${days} day(s)`,days<=3?"soon":"upcoming","fa-calendar-day")});
+            }
+        }
+        // Health records are surfaced as follow-ups when recent; the app does not infer a diagnosis.
+        const health = Array.isArray(goat.healthRecords) ? goat.healthRecords : [];
+        health.forEach(record => {
+            if (!record || record.resolved === true || /resolved|recovered|closed/i.test(String(record.status || ""))) return;
+            const date = dashboardParseDate(record.date);
+            if (!date) return;
+            const daysAgo = -dashboardDaysFromToday(date);
+            if (daysAgo >= 0 && daysAgo <= 14) {
+                const problem = record.problem || record.issue || "Health record";
+                alerts.push({goat, priority:1, html:dashboardRenderAlert(goat,"Health follow-up",`${problem} · recorded ${daysAgo===0?"today":daysAgo+" day(s) ago"}`,"health","fa-heart-pulse")});
+            }
+        });
+    });
+    alerts.sort((a,b)=>a.priority-b.priority);
+    container.innerHTML = alerts.length ? alerts.map(a=>a.html).join("") : '<div class="dashboard-alert-empty"><i class="fa-solid fa-circle-check"></i><strong>No urgent items found</strong><span>Vaccination due dates, expected deliveries and recent health records will appear here.</span></div>';
+    const count = document.getElementById("dashboardTaskCount");
+    if (count) { count.textContent = String(alerts.length); count.classList.toggle("has-tasks", alerts.length > 0); }
+}
+
+function dashboardRenderAge(dob) {
+    const date = dashboardParseDate(dob);
+    if (!date) return "Age unavailable";
+    const days = Math.max(0, Math.floor((new Date().setHours(0,0,0,0) - new Date(date).setHours(0,0,0,0)) / 86400000));
+    const years = Math.floor(days / 365.2425);
+    const months = Math.floor((days - years * 365.2425) / 30.4375);
+    if (years) return `${years}y ${months}m`;
+    if (months) return `${months}m`;
+    return `${days}d`;
+}
+
+function renderDashboardHerdOverview() {
+    const active = dashboardActiveGoats();
+    const males = active.filter(g => String(g.gender || "").toLowerCase() === "male");
+    const females = active.filter(g => String(g.gender || "").toLowerCase() === "female");
+    const total = document.getElementById("dashboardGoats");
+    if (total) total.textContent = String(active.length);
+    const maleEl = document.getElementById("dashboardMaleCount"); if (maleEl) maleEl.textContent = String(males.length);
+    const femaleEl = document.getElementById("dashboardFemaleCount"); if (femaleEl) femaleEl.textContent = String(females.length);
+    const subtitle = document.getElementById("dashboardHerdSubtitle");
+    if (subtitle) subtitle.textContent = `${active.length} active goat(s) · excludes sold and deceased records`;
+    const breedEl = document.getElementById("dashboardBreedCounts");
+    if (!breedEl) return;
+    const breedCounts = new Map();
+    active.forEach(g => { const breed = String(g.breed || "Unknown").trim() || "Unknown"; breedCounts.set(breed,(breedCounts.get(breed)||0)+1); });
+    const breeds = [...breedCounts.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+    breedEl.innerHTML = breeds.length ? breeds.map(([breed,count]) => {
+        const safeBreed = dashboardSafeText(breed);
+        const arg = JSON.stringify(breed).replace(/</g,"\\u003c");
+        return `<button type="button" class="dashboard-breed-chip" onclick='dashboardShowHerd("breed",${arg})'><span>${safeBreed}</span><strong>${count}</strong></button>`;
+    }).join("") : '<div class="dashboard-herd-empty">Add goat records to see breed counts.</div>';
+}
+
+let dashboardSelectedHerdFilter = { type: "all", value: "" };
+
+function dashboardShowHerd(filterType, filterValue) {
+    dashboardSelectedHerdFilter = { type: filterType, value: String(filterValue || "") };
+    const search = document.getElementById("herdDetailsSearch");
+    if (search) search.value = "";
+    showPage("herdDetailsPage");
+    dashboardRenderHerdDetails();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function dashboardGetFilteredHerdDetails() {
+    const filter = dashboardSelectedHerdFilter || { type: "all", value: "" };
+    const query = String(document.getElementById("herdDetailsSearch")?.value || "").trim().toLowerCase();
+    let filtered = dashboardActiveGoats().filter(g => {
+        if (filter.type === "gender" && String(g.gender || "").toLowerCase() !== filter.value.toLowerCase()) return false;
+        if (filter.type === "breed" && String(g.breed || "Unknown").trim() !== filter.value) return false;
+        if (query && !String(g.tag || "").toLowerCase().includes(query) && !String(g.breed || "").toLowerCase().includes(query)) return false;
+        return true;
+    });
+    filtered.sort((a, b) => {
+        const da = dashboardParseDate(a.dob), db = dashboardParseDate(b.dob);
+        if (da && db) return da.getTime() - db.getTime();
+        if (da) return -1;
+        if (db) return 1;
+        return String(a.tag || "").localeCompare(String(b.tag || ""), undefined, { numeric: true });
+    });
+    return filtered;
+}
+
+function dashboardRenderHerdDetails() {
+    const page = document.getElementById("herdDetailsPage");
+    if (!page) return;
+    const filter = dashboardSelectedHerdFilter || { type: "all", value: "" };
+    const title = filter.type === "gender" ? `${filter.value} goats` : filter.type === "breed" ? `${filter.value} goats` : "All active goats";
+    const filtered = dashboardGetFilteredHerdDetails();
+    const titleEl = document.getElementById("herdDetailsTitle");
+    const subtitleEl = document.getElementById("herdDetailsSubtitle");
+    const countEl = document.getElementById("herdDetailsCount");
+    const oldestEl = document.getElementById("herdDetailsOldest");
+    const listEl = document.getElementById("herdDetailsList");
+    if (titleEl) titleEl.textContent = title;
+    if (subtitleEl) subtitleEl.textContent = filter.type === "gender" ? `Active ${filter.value.toLowerCase()} goats · oldest to youngest` : filter.type === "breed" ? `Active goats recorded as ${filter.value} · oldest to youngest` : "Active herd · oldest to youngest";
+    if (countEl) countEl.textContent = String(filtered.length);
+    if (oldestEl) oldestEl.textContent = filtered.length && filtered[0].dob ? dashboardRenderAge(filtered[0].dob) : "—";
+    if (!listEl) return;
+    if (!filtered.length) {
+        listEl.innerHTML = '<div class="herd-details-empty"><i class="fa-solid fa-magnifying-glass"></i><strong>No goats found</strong><span>Try another search or check the goat gender, breed or date of birth.</span></div>';
+        return;
+    }
+    listEl.innerHTML = filtered.map(g => {
+        const tag = dashboardSafeText(g.tag || "Untagged goat");
+        const tagArg = JSON.stringify(String(g.tag || "")).replace(/</g, "\\u003c");
+        const breed = dashboardSafeText(g.breed || "Breed not recorded");
+        const gender = dashboardSafeText(g.gender || "Gender not recorded");
+        const dob = dashboardSafeText(g.dob || "DOB not recorded");
+        const age = dashboardSafeText(dashboardRenderAge(g.dob));
+        return `<article class="herd-details-goat-card"><div class="herd-details-goat-icon"><i class="fa-solid fa-paw"></i></div><div class="herd-details-goat-info"><strong>${tag}</strong><span>${gender} · ${breed}</span><small>DOB: ${dob} · Age: ${age}</small></div><button type="button" class="herd-open-profile" onclick='openGoatProfile(${tagArg})' aria-label="Open profile for ${tag}">View profile <i class="fa-solid fa-chevron-right"></i></button></article>`;
+    }).join("");
+}
+
+function dashboardBackFromHerdDetails() {
+    showPage("dashboardPage");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function dashboardExportHerdDetails() {
+    const filtered = dashboardGetFilteredHerdDetails();
+    if (!filtered.length) { alert("There are no goats in this list to export."); return; }
+    const quote = value => '"' + String(value == null ? "" : value).replace(/"/g, '""') + '"';
+    const rows = [["Tag", "Gender", "Breed", "Date of Birth", "Age", "Status"], ...filtered.map(g => [g.tag || "", g.gender || "", g.breed || "", g.dob || "", dashboardRenderAge(g.dob), g.status || "Active"])];
+    const csv = rows.map(row => row.map(quote).join(",")).join("\r\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const safeName = String(dashboardSelectedHerdFilter.value || "active-herd").replace(/[^a-z0-9_-]+/gi, "-");
+    link.href = url; link.download = `SP-Goat-Farm-${safeName}-goats.csv`;
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+}
+
 /* CHART */
 
 function updateChart(
@@ -3772,17 +3884,21 @@ renderExpenses();
 
 renderIncome();
 
-/* SERVICE WORKER: relative path also works when hosted in a project subfolder. */
+/* SERVICE WORKER */
+
 if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js")
-            .then(registration => {
-                console.log("Service Worker Registered:", registration.scope);
-            })
-            .catch(error => {
-                console.error("Service Worker registration failed:", error);
-            });
-    });
+
+    navigator.serviceWorker
+        .register(
+            "service-worker.js"
+        )
+
+        .then(() => {
+
+            console.log(
+                "Service Worker Registered"
+            );
+        });
 }
 
 /* INTERACTIVE GOAT PROFILE: collapsible record sections.
@@ -3804,3 +3920,18 @@ document.addEventListener("keydown", function (event) {
     event.preventDefault();
     heading.click();
 });
+
+if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(err => console.error("Service worker registration failed:", err))); }
+
+
+/* Expose the existing goat array to the optional Farm Tools module without changing its storage model. */
+try {
+    Object.defineProperty(window, 'goats', {
+        configurable: true,
+        get: () => goats,
+        set: value => { if (Array.isArray(value)) goats = value; }
+    });
+} catch (error) {
+    console.warn('Could not expose goat records to Farm Tools:', error);
+}
+
