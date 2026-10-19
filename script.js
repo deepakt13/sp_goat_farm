@@ -307,17 +307,18 @@ function processQrPayload(rawPayload) {
     const message = document.getElementById("qrEntryMessage");
     const raw = String(rawPayload || "").trim();
 
-    // Individual goat tag QR: SPGOATID|<tag>. Imported JSON records use the same tags.
+    // Individual goat tag QR. Accept both the app format (SPGOATID|<tag>)
+    // and legacy/printed QR codes that contain only the raw tag (for example SP01-01).
     const idMatch = raw.match(/^SPGOATID\|(.+)$/i);
+    const rawTag = idMatch ? idMatch[1].trim() : raw;
+    const existingTag = goats.find(g => String(g.tag || "").trim().toLowerCase() === rawTag.toLowerCase());
+    if (existingTag && (idMatch || /^[A-Za-z0-9][A-Za-z0-9_-]{1,31}$/.test(rawTag))) {
+        closeQrEntry();
+        openGoatProfile(existingTag.tag);
+        return;
+    }
     if (idMatch) {
-        const tag = idMatch[1].trim();
-        const existing = goats.find(g => String(g.tag || "").toLowerCase() === tag.toLowerCase());
-        if (existing) {
-            closeQrEntry();
-            openGoatProfile(existing.tag);
-        } else if (message) {
-            message.textContent = `No goat with tag ${tag} exists in this data. Import the matching JSON backup or check the tag.`;
-        }
+        if (message) message.textContent = `No goat with tag ${rawTag} exists in this data. Import the matching JSON backup or check the tag.`;
         return;
     }
 
