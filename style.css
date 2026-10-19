@@ -2933,3 +2933,123 @@ body.dark-mode .farm-dashboard .dashboard-alert-item.health .dashboard-alert-ico
 body.dark-mode .farm-dashboard .dashboard-alert-item.health .dashboard-alert-icon .fa-solid {
   color:#ff9bc7 !important; -webkit-text-fill-color:#ff9bc7 !important;
 }
+
+
+/* Goat photo upload and live camera controls */
+.goat-photo-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+.photo-file-input {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+.photo-pick-button {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 10px;
+    border-radius: 14px;
+    background: #e0f2fe;
+    color: #075985;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #bae6fd;
+}
+.photo-pick-button.camera {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+.photo-pick-button:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+.photo-compression-note {
+    display: block;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+.dark-mode .photo-pick-button { background: #172554; color: #dbeafe; border-color: #1d4ed8; }
+.dark-mode .photo-pick-button.camera { background: #14532d; color: #dcfce7; border-color: #15803d; }
+.dark-mode .photo-compression-note { color: #cbd5e1; }
+.qr-photo-actions { margin: 0; }
+@media (max-width: 390px) { .goat-photo-actions { grid-template-columns: 1fr; } }
+
+/* Live camera modal */
+.goat-camera-modal { position: fixed; inset: 0; z-index: 100000; background: rgba(0,0,0,.78); align-items: center; justify-content: center; padding: 16px; }
+.goat-camera-panel { width: min(620px, 100%); background: var(--card-bg, #fff); color: var(--text-color, #111827); border-radius: 18px; padding: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.goat-camera-panel h3 { margin-top: 0; }
+#goatCameraVideo { display: block; width: 100%; max-height: 60vh; background: #111; border-radius: 12px; object-fit: contain; }
+#goatCameraStatus { font-size: 14px; }
+.goat-camera-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.goat-camera-actions button { flex: 1; min-width: 130px; }
+.dark-mode .goat-camera-panel { background: #111827; color: #f8fafc; }
+
+/* UI polish: keep upload and camera controls perfectly aligned */
+.goat-photo-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    width: 100%;
+}
+.goat-photo-actions > .photo-pick-button {
+    box-sizing: border-box !important;
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+    margin: 0 !important;
+    padding: 12px 16px !important;
+    border-radius: 18px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    line-height: 1.25 !important;
+    font-size: clamp(14px, 1.5vw, 17px) !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    white-space: normal !important;
+}
+.goat-photo-actions > .photo-pick-button i {
+    display: inline-block !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    font-size: 1.05em !important;
+}
+.goat-photo-actions > .photo-file-input { display: none !important; }
+.photo-compression-note {
+    margin: 12px 0 22px !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+}
+@media (max-width: 520px) {
+    .goat-photo-actions { gap: 10px !important; }
+    .goat-photo-actions > .photo-pick-button {
+        height: 58px !important;
+        min-height: 58px !important;
+        max-height: 58px !important;
+        padding: 8px !important;
+        font-size: 13px !important;
+        border-radius: 14px !important;
+    }
+}
+@media (max-width: 360px) {
+    .goat-photo-actions { grid-template-columns: 1fr !important; }
+}
