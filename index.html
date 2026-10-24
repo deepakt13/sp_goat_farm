@@ -173,6 +173,27 @@
                 <div id="dashboardHerdList" class="dashboard-herd-list"></div>
             </section>
 
+            <!-- BREEDING MANAGEMENT: intentionally placed immediately above Farm finances -->
+            <section class="dashboard-panel breeding-management-card" aria-labelledby="breedingManagementHeading">
+                <div class="dashboard-panel-heading">
+                    <div><h3 id="breedingManagementHeading"><i class="fa-solid fa-venus"></i> Breeding Management</h3><p>Review potential breeding females and current pregnancies</p></div>
+                    <span class="dashboard-count-pill" id="breedingEligibleCount">0 eligible</span>
+                </div>
+                <div class="breeding-management-actions">
+                    <button type="button" class="breeding-action eligible" onclick="openBreedingManagement('eligible')">
+                        <span class="breeding-action-icon"><i class="fa-solid fa-check-double"></i></span>
+                        <span><strong>Eligible female goats</strong><small>Age, weight and health screening</small></span>
+                        <b id="breedingEligibleButtonCount">0</b>
+                    </button>
+                    <button type="button" class="breeding-action pregnant" onclick="openBreedingManagement('pregnant')">
+                        <span class="breeding-action-icon"><i class="fa-solid fa-heart-pulse"></i></span>
+                        <span><strong>Pregnant goats</strong><small>View expected delivery dates</small></span>
+                        <b id="breedingPregnantButtonCount">0</b>
+                    </button>
+                </div>
+                <p class="breeding-management-note"><i class="fa-solid fa-circle-info"></i> Record-based screening only; confirm readiness with a veterinarian.</p>
+            </section>
+
             <div class="dashboard-section-heading dashboard-finance-heading">
                 <h3>Farm finances</h3>
                 <span>Tap a card to open details</span>
@@ -222,6 +243,19 @@
                 <button type="button" class="dashboard-breed-qr-button" onclick="openQrLibrary()"><i class="fa-solid fa-qrcode"></i> View / Print 6 Breed QR Codes</button>
                 <label class="dashboard-import-button"><i class="fa-solid fa-file-import"></i> Import goat backup<input type="file" accept="application/json,.json" onchange="restoreData(event)"></label>
             </div>
+        </div>
+
+        <!-- BREEDING MANAGEMENT LIST PAGE -->
+        <div id="breedingManagementPage" class="breeding-management-page" style="display:none;">
+            <div class="breeding-page-header">
+                <button type="button" class="herd-back-button" onclick="showPage('dashboardPage')"><i class="fa-solid fa-arrow-left"></i> Dashboard</button>
+                <p class="dashboard-eyebrow">SP GOAT FARM · BREEDING</p>
+                <h2 id="breedingListTitle">Eligible female goats</h2>
+                <p id="breedingListSubtitle">Female goats meeting the current screening rules</p>
+            </div>
+            <label class="breeding-list-search"><i class="fa-solid fa-magnifying-glass"></i><input id="breedingListSearch" type="search" placeholder="Search tag or breed" oninput="renderBreedingManagementList()" aria-label="Search breeding list"></label>
+            <div class="breeding-criteria-note" id="breedingCriteriaNote"></div>
+            <div id="breedingManagementList" class="breeding-management-list" aria-live="polite"></div>
         </div>
 
         <!-- HERD DETAILS PAGE: opens separately from the dashboard -->
