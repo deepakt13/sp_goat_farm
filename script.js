@@ -539,6 +539,8 @@ function showPage(pageId) {
     if (farmToolsPage) farmToolsPage.style.display = "none";
     const herdDetailsPage = document.getElementById("herdDetailsPage");
     if (herdDetailsPage) herdDetailsPage.style.display = "none";
+    const breedingManagementPage = document.getElementById("breedingManagementPage");
+    if (breedingManagementPage) breedingManagementPage.style.display = "none";
 
     const requestedPage = document.getElementById(pageId);
     if (!requestedPage) {
@@ -562,6 +564,10 @@ function showPage(pageId) {
 
     if (pageId === "dashboardPage") {
         updateDashboard();
+    }
+
+    if (pageId === "breedingManagementPage") {
+        renderBreedingManagementList();
     }
 
     if (pageId === "businessPage") {
@@ -600,6 +606,141 @@ function saveData() {
 }
 
 /* DASHBOARD */
+
+/* BREEDING MANAGEMENT — record-based screening and lists */
+function breedingActiveGoats() {
+    return (Array.isArray(goats) ? goats : []).filter(g => {
+        const status = String(g.status || "Active").toLowerCase();
+        return status !== "sold" && status !== "died";
+    });
+}
+
+function breedingAgeInMonths(dob) {
+    const birth = dashboardParseDate(dob);
+    if (!birth) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    if (birth > today) return null;
+    let months = (today.getFullYear() - birth.getFullYear()) * 12 + today.getMonth() - birth.getMonth();
+    if (today.getDate() < birth.getDate()) months--;
+    return months;
+}
+
+function breedingLatestWeight(goat) {
+    const records = Array.isArray(goat.weights) ? goat.weights : [];
+    const normalized = records.map(r => ({ record: r, date: dashboardParseDate(r && r.date), weight: Number(r && r.weight) }))
+        .filter(r => Number.isFinite(r.weight) && r.weight > 0)
+        .sort((a,b) => (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0));
+    return normalized.length ? normalized[0].weight : null;
+}
+
+function breedingIsPregnant(goat) {
+    const records = Array.isArray(goat.breedingRecords) ? goat.breedingRecords : [];
+    return records.slice().reverse().some(r => {
+        if (!r || String(r.pregnancyStatus || "").toLowerCase() !== "yes") return false;
+        if (/^(yes|true|1)$/i.test(String(r.givenBirth || "no"))) return false;
+        if (/^(yes|true|1)$/i.test(String(r.pregnancyLost || r.pregnancyLoss || "no"))) return false;
+        return true;
+    });
+}
+
+function breedingHasRecentHealthIssue(goat) {
+    const records = Array.isArray(goat.healthRecords) ? goat.healthRecords : [];
+    return records.some(r => {
+        if (!r || r.resolved === true || /resolved|recovered|closed/i.test(String(r.status || ""))) return false;
+        const date = dashboardParseDate(r.date);
+        if (!date) return false;
+        const daysAgo = -dashboardDaysFromToday(date);
+        return daysAgo >= 0 && daysAgo <= 30;
+    });
+}
+
+function breedingHasRecentKidding(goat) {
+    const records = Array.isArray(goat.breedingRecords) ? goat.breedingRecords : [];
+    return records.some(r => {
+        if (!r || !/^(yes|true|1)$/i.test(String(r.givenBirth || "no"))) return false;
+        const date = dashboardParseDate(r.actualDeliveryDate || r.birthDate || r.deliveryDate);
+        if (!date) return false;
+        const daysAgo = -dashboardDaysFromToday(date);
+        return daysAgo >= 0 && daysAgo <= 60;
+    });
+}
+
+function breedingEligibleFemales() {
+    return breedingActiveGoats().filter(g => {
+        if (String(g.gender || "").toLowerCase() !== "female") return false;
+        const ageMonths = breedingAgeInMonths(g.dob);
+        const weight = breedingLatestWeight(g);
+        return ageMonths !== null && ageMonths >= 10 && weight !== null && weight >= 16 &&
+            !breedingIsPregnant(g) && !breedingHasRecentHealthIssue(g) && !breedingHasRecentKidding(g);
+    }).sort((a,b) => (breedingAgeInMonths(b.dob) || 0) - (breedingAgeInMonths(a.dob) || 0));
+}
+
+function breedingPregnantGoats() {
+    return breedingActiveGoats().filter(g => String(g.gender || "").toLowerCase() === "female" && breedingIsPregnant(g))
+        .sort((a,b) => {
+            const da = breedingExpectedDelivery(a), db = breedingExpectedDelivery(b);
+            if (da && db) return da - db;
+            if (da) return -1;
+            if (db) return 1;
+            return String(a.tag || "").localeCompare(String(b.tag || ""), undefined, {numeric:true});
+        });
+}
+
+function breedingExpectedDelivery(goat) {
+    const records = Array.isArray(goat.breedingRecords) ? goat.breedingRecords : [];
+    const record = records.slice().reverse().find(r => r && String(r.pregnancyStatus || "").toLowerCase() === "yes" && !/^(yes|true|1)$/i.test(String(r.givenBirth || "no")));
+    return record ? dashboardParseDate(record.deliveryDate) : null;
+}
+
+function updateBreedingManagementCounts() {
+    const eligible = breedingEligibleFemales().length;
+    const pregnant = breedingPregnantGoats().length;
+    const badge = document.getElementById("breedingEligibleCount"); if (badge) badge.textContent = `${eligible} eligible`;
+    const eligibleButton = document.getElementById("breedingEligibleButtonCount"); if (eligibleButton) eligibleButton.textContent = String(eligible);
+    const pregnantButton = document.getElementById("breedingPregnantButtonCount"); if (pregnantButton) pregnantButton.textContent = String(pregnant);
+}
+
+function openBreedingManagement(type) {
+    window.breedingManagementType = type === "pregnant" ? "pregnant" : "eligible";
+    const search = document.getElementById("breedingListSearch"); if (search) search.value = "";
+    showPage("breedingManagementPage");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderBreedingManagementList() {
+    const type = window.breedingManagementType === "pregnant" ? "pregnant" : "eligible";
+    const title = document.getElementById("breedingListTitle");
+    const subtitle = document.getElementById("breedingListSubtitle");
+    const note = document.getElementById("breedingCriteriaNote");
+    const list = document.getElementById("breedingManagementList");
+    if (!list) return;
+    const search = String(document.getElementById("breedingListSearch")?.value || "").trim().toLowerCase();
+    let rows = type === "pregnant" ? breedingPregnantGoats() : breedingEligibleFemales();
+    rows = rows.filter(g => !search || String(g.tag || "").toLowerCase().includes(search) || String(g.breed || "").toLowerCase().includes(search));
+    if (title) title.textContent = type === "pregnant" ? "Pregnant goats" : "Eligible female goats";
+    if (subtitle) subtitle.textContent = type === "pregnant" ? `${rows.length} active female goat(s) with pregnancy recorded` : `${rows.length} female goat(s) matching the current screening rules`;
+    if (note) note.innerHTML = type === "pregnant"
+        ? '<i class="fa-solid fa-circle-info"></i> Pregnancy is based on saved breeding records. Confirm status and expected delivery with farm records or a veterinarian.'
+        : '<i class="fa-solid fa-circle-info"></i> Rules: female, at least 10 months old, latest recorded weight at least 16 kg, no current recorded pregnancy, no unresolved health record from the last 30 days, and no recorded kidding in the last 60 days. Missing DOB or weight means the goat is not included. This list is not veterinary clearance.';
+    if (!rows.length) {
+        list.innerHTML = `<div class="breeding-list-empty"><i class="fa-solid ${type === "pregnant" ? "fa-heart" : "fa-clipboard-check"}"></i><strong>No goats found</strong><span>${search ? "Try a different tag or breed search." : "No goats currently match this list. Check saved DOB, weight, health and breeding records."}</span></div>`;
+        return;
+    }
+    list.innerHTML = rows.map(g => {
+        const tag = dashboardSafeText(g.tag || "Untagged goat");
+        const breed = dashboardSafeText(g.breed || "Breed not recorded");
+        const ageMonths = breedingAgeInMonths(g.dob);
+        const ageText = ageMonths === null ? "Age unavailable" : `${Math.floor(ageMonths/12)}y ${ageMonths%12}m`;
+        const weight = breedingLatestWeight(g);
+        const delivery = breedingExpectedDelivery(g);
+        const details = type === "pregnant"
+            ? `Expected delivery: ${delivery ? delivery.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}) : "not recorded"}`
+            : `Age: ${ageText} · Latest weight: ${weight} kg`;
+        const tagArg = JSON.stringify(String(g.tag || "")).replace(/</g,"\\u003c");
+        const photo = g.image ? `<img src="${String(g.image).replace(/"/g,"&quot;")}" alt="${tag}" loading="lazy">` : '<span class="breeding-goat-placeholder"><i class="fa-solid fa-goat"></i></span>';
+        return `<article class="breeding-goat-row"><div class="breeding-goat-photo">${photo}</div><div class="breeding-goat-copy"><strong>${tag}</strong><span>${breed}</span><small>${dashboardSafeText(details)}</small></div><button type="button" class="breeding-view-profile" onclick='openGoatProfile(${tagArg})'>Profile <i class="fa-solid fa-chevron-right"></i></button></article>`;
+    }).join("");
+}
 
 function updateDashboard() {
 
@@ -641,6 +782,7 @@ function updateDashboard() {
     );
     renderDashboardAlerts();
     renderDashboardExtras();
+    updateBreedingManagementCounts();
 }
 
 function renderDashboardExtras() {
@@ -4146,4 +4288,3 @@ try {
 } catch (error) {
     console.warn('Could not expose goat records to Farm Tools:', error);
 }
-
