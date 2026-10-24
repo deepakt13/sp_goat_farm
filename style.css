@@ -3484,3 +3484,177 @@ body.dark-mode .dashboard-footer-actions > .dashboard-breed-qr-button {
   .dashboard-lookup-row > .dashboard-scan-compact span,
   .dashboard-lookup-row > .dashboard-view-all strong { font-size: 11px !important; }
 }
+
+/* BREEDING MANAGEMENT — added without changing existing dashboard styling */
+.breeding-management-card { margin: 18px 16px 20px; padding: 16px; border: 1px solid #dcebe1; border-radius: 22px; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.045); }
+.breeding-management-card .dashboard-panel-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.breeding-management-card .dashboard-panel-heading h3 { margin: 0 0 5px; padding:0; font-size:17px; }
+.breeding-management-card .dashboard-panel-heading h3 i { color:#15803d; margin-right:7px; }
+.breeding-management-card .dashboard-panel-heading p { color:#64748b; font-size:12px; line-height:1.4; }
+.breeding-management-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+.breeding-action { display:flex; align-items:center; gap:9px; min-width:0; margin:0; padding:12px 10px; border:1px solid #e5e7eb; border-radius:16px; background:#f8fafc; color:#111827; text-align:left; }
+.breeding-action:hover { background:#f0fdf4; transform:translateY(-1px); }
+.breeding-action-icon { display:grid; place-items:center; flex:0 0 36px; width:36px; height:36px; border-radius:12px; background:#dcfce7; color:#15803d; }
+.breeding-action.pregnant .breeding-action-icon { background:#fce7f3; color:#be185d; }
+.breeding-action > span:nth-child(2) { display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; }
+.breeding-action strong { font-size:12px; line-height:1.25; }
+.breeding-action small { font-size:10px; line-height:1.3; color:#64748b; font-weight:normal; }
+.breeding-action > b { display:grid; place-items:center; min-width:25px; height:25px; padding:0 5px; border-radius:9px; background:#fff; color:#166534; font-size:12px; }
+.breeding-management-note { margin-top:12px; font-size:11px; line-height:1.45; color:#64748b; }
+.breeding-management-note i { color:#15803d; margin-right:4px; }
+.breeding-management-page { padding:12px 16px 30px; }
+.breeding-page-header { margin-bottom:14px; }
+.breeding-page-header .herd-back-button { margin:0 0 18px; }
+.breeding-page-header h2 { text-align:left; margin:5px 0; }
+.breeding-page-header > p:last-child { color:#64748b; font-size:13px; }
+.breeding-list-search { display:flex; align-items:center; gap:9px; padding:0 13px; border:1px solid #d1d5db; border-radius:14px; background:#fff; }
+.breeding-list-search i { color:#64748b; }
+.breeding-list-search input { margin:0; padding:13px 0; border:0; box-shadow:none; background:transparent; }
+.breeding-criteria-note { margin:12px 0; padding:12px; border-radius:13px; background:#f0fdf4; color:#166534; font-size:12px; line-height:1.5; }
+.breeding-criteria-note i { margin-right:5px; }
+.breeding-management-list { display:flex; flex-direction:column; gap:10px; }
+.breeding-goat-row { display:flex; align-items:center; gap:11px; padding:12px; border:1px solid #e5e7eb; border-radius:17px; background:#fff; box-shadow:0 3px 12px rgba(0,0,0,.035); }
+.breeding-goat-photo { flex:0 0 58px; width:58px; height:58px; overflow:hidden; border-radius:14px; background:#f1f5f9; }
+.breeding-goat-photo img { width:100%; height:100%; object-fit:cover; }
+.breeding-goat-placeholder { display:grid; place-items:center; width:100%; height:100%; color:#16a34a; font-size:23px; }
+.breeding-goat-copy { display:flex; flex-direction:column; flex:1; min-width:0; gap:4px; }
+.breeding-goat-copy strong { font-size:15px; }
+.breeding-goat-copy span { font-size:12px; color:#475569; }
+.breeding-goat-copy small { font-size:11px; line-height:1.4; color:#64748b; }
+.breeding-view-profile { flex:0 0 auto; width:auto; margin:0; padding:9px 10px; border-radius:11px; font-size:11px; }
+.breeding-list-empty { display:flex; flex-direction:column; align-items:center; gap:8px; padding:30px 18px; text-align:center; border:1px dashed #cbd5e1; border-radius:17px; color:#64748b; }
+.breeding-list-empty > i { font-size:27px; color:#16a34a; }
+.breeding-list-empty strong { color:#334155; }
+.breeding-list-empty span { font-size:12px; line-height:1.5; }
+.dark-mode .breeding-management-card, .dark-mode .breeding-goat-row { background:#1f2937; color:#f9fafb; border-color:#374151; }
+.dark-mode .breeding-action { background:#111827; color:#f9fafb; border-color:#374151; }
+.dark-mode .breeding-action > b { background:#374151; color:#bbf7d0; }
+.dark-mode .breeding-list-search { background:#1f2937; border-color:#374151; }
+.dark-mode .breeding-criteria-note { background:#052e16; color:#bbf7d0; }
+.dark-mode .breeding-goat-copy span, .dark-mode .breeding-goat-copy small { color:#cbd5e1; }
+.dark-mode .breeding-list-empty { border-color:#4b5563; }
+.dark-mode .breeding-list-empty strong { color:#f9fafb; }
+@media (max-width:430px) {
+ .breeding-management-card { margin-left:10px; margin-right:10px; padding:12px; }
+ .breeding-management-actions { gap:7px; }
+ .breeding-action { padding:10px 7px; gap:6px; }
+ .breeding-action-icon { flex-basis:30px; width:30px; height:30px; }
+ .breeding-action strong { font-size:11px; }
+ .breeding-action small { font-size:9px; }
+ .breeding-goat-row { gap:8px; padding:9px; }
+ .breeding-goat-photo { flex-basis:48px; width:48px; height:48px; }
+ .breeding-view-profile { padding:8px; }
+}
+
+
+/* BREEDING MANAGEMENT: accessible colors in both light and dark themes.
+   These scoped overrides intentionally affect only the breeding module. */
+body:not(.dark-mode) .farm-dashboard .breeding-management-card {
+  background: #ffffff !important;
+  color: #10251a !important;
+  border-color: #dcebe1 !important;
+}
+body:not(.dark-mode) .farm-dashboard .breeding-management-card .dashboard-panel-heading h3,
+body:not(.dark-mode) .farm-dashboard .breeding-management-card .dashboard-panel-heading h3 i {
+  color: #14532d !important;
+}
+body:not(.dark-mode) .farm-dashboard .breeding-management-card .dashboard-panel-heading p,
+body:not(.dark-mode) .farm-dashboard .breeding-management-card .breeding-management-note {
+  color: #52665a !important;
+}
+body:not(.dark-mode) .farm-dashboard .breeding-management-card .breeding-action {
+  background: #f7fbf8 !important;
+  color: #123322 !important;
+  border-color: #d7e8dc !important;
+}
+body:not(.dark-mode) .farm-dashboard .breeding-management-card .breeding-action:hover {
+  background: #edf8f0 !important;
+}
+body:not(.dark-mode) .farm-dashboard .breeding-management-card .breeding-action strong {
+  color: #123322 !important;
+}
+body:not(.dark-mode) .farm-dashboard .breeding-management-card .breeding-action small {
+  color: #52665a !important;
+}
+body:not(.dark-mode) .farm-dashboard .breeding-management-card .breeding-action > b {
+  background: #ffffff !important;
+  color: #14532d !important;
+  border: 1px solid #d7e8dc !important;
+}
+body:not(.dark-mode) .farm-dashboard .breeding-management-card .breeding-management-note i {
+  color: #166534 !important;
+}
+
+body.dark-mode .farm-dashboard .breeding-management-card {
+  background: #17231b !important;
+  color: #f0f8f2 !important;
+  border-color: #344b3a !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22) !important;
+}
+body.dark-mode .farm-dashboard .breeding-management-card .dashboard-panel-heading h3,
+body.dark-mode .farm-dashboard .breeding-management-card .dashboard-panel-heading h3 i {
+  color: #e5f7e9 !important;
+}
+body.dark-mode .farm-dashboard .breeding-management-card .dashboard-panel-heading p,
+body.dark-mode .farm-dashboard .breeding-management-card .breeding-management-note {
+  color: #bfd2c4 !important;
+}
+body.dark-mode .farm-dashboard .breeding-management-card .breeding-action {
+  background: #23382a !important;
+  color: #f0f8f2 !important;
+  border-color: #3d5b46 !important;
+}
+body.dark-mode .farm-dashboard .breeding-management-card .breeding-action:hover {
+  background: #2b4634 !important;
+}
+body.dark-mode .farm-dashboard .breeding-management-card .breeding-action strong {
+  color: #f0f8f2 !important;
+}
+body.dark-mode .farm-dashboard .breeding-management-card .breeding-action small {
+  color: #c2d5c8 !important;
+}
+body.dark-mode .farm-dashboard .breeding-management-card .breeding-action-icon {
+  background: #315b40 !important;
+  color: #d8fbe2 !important;
+}
+body.dark-mode .farm-dashboard .breeding-management-card .breeding-action.pregnant .breeding-action-icon {
+  background: #59334b !important;
+  color: #ffe0ef !important;
+}
+body.dark-mode .farm-dashboard .breeding-management-card .breeding-action > b {
+  background: #e3f7e8 !important;
+  color: #174c2b !important;
+  border: 0 !important;
+}
+body.dark-mode .farm-dashboard .breeding-management-card .breeding-management-note i {
+  color: #9de2b0 !important;
+}
+body.dark-mode .breeding-management-page .breeding-page-header > p:last-child {
+  color: #c2d5c8 !important;
+}
+body.dark-mode .breeding-management-page .breeding-list-search input {
+  color: #f0f8f2 !important;
+}
+body.dark-mode .breeding-management-page .breeding-list-search input::placeholder {
+  color: #aebfb3 !important;
+}
+body.dark-mode .breeding-management-page .breeding-goat-row {
+  background: #1b2a20 !important;
+  color: #f0f8f2 !important;
+  border-color: #344b3a !important;
+}
+body.dark-mode .breeding-management-page .breeding-goat-copy strong {
+  color: #f0f8f2 !important;
+}
+body.dark-mode .breeding-management-page .breeding-goat-copy span,
+body.dark-mode .breeding-management-page .breeding-goat-copy small {
+  color: #c2d5c8 !important;
+}
+body.dark-mode .breeding-management-page .breeding-list-empty {
+  background: #17231b !important;
+  color: #c2d5c8 !important;
+  border-color: #49634f !important;
+}
+body.dark-mode .breeding-management-page .breeding-list-empty strong {
+  color: #f0f8f2 !important;
+}
